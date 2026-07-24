@@ -21,6 +21,11 @@ RUN dotnet publish "ChurchWeb.Web.csproj" -c Release -o /app/publish /p:UseAppHo
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
+# Install Kerberos library for PostgreSQL GSSAPI authentication
+RUN apt-get update && apt-get install -y \
+    libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Render 퍼시스턴트 디스크용 디렉터리 생성
 RUN mkdir -p /var/data/uploads /var/data/keys && chmod -R 755 /var/data
 
