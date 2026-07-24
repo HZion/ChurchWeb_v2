@@ -117,7 +117,7 @@ public class HomeService : IHomeService
             Message = ""
         };
 
-        // 소식
+        // 소식 - 공지사항
         var notices = await _context.Notices
             .Where(n => n.IsVisible && n.CategoryKey == "church")
             .OrderByDescending(n => n.IsPinned)
@@ -128,7 +128,22 @@ public class HomeService : IHomeService
                 IsPinned = n.IsPinned,
                 Title = n.Title,
                 Date = n.PostedOn.ToString("MM.dd"),
-                Url = "#"
+                Url = $"/notices/{n.Id}"
+            })
+            .ToListAsync();
+
+        // 소식 - 교회 행사 (Album에서 최근 4개 가져오기, 사진 포함)
+        var events = await _context.Albums
+            .Where(a => a.IsVisible)
+            .OrderByDescending(a => a.EventDate)
+            .Take(4)
+            .Include(a => a.Photos.OrderBy(p => p.SortOrder).Take(4))
+            .Select(a => new EventItem
+            {
+                Title = a.Title,
+                ThumbnailUrl = a.CoverImageUrl,
+                Url = $"/albums/{a.Id}",
+                Photos = a.Photos.Select(p => p.ImageUrl).ToList()
             })
             .ToListAsync();
 
@@ -217,13 +232,7 @@ public class HomeService : IHomeService
                 SectionEyebrow = "NEWS & EVENTS",
                 SectionTitle = "교회 소식",
                 Notices = notices,
-                Events = new List<EventItem>
-                {
-                    new() { Title = "여름 수련회", ThumbnailUrl = "", Url = "#" },
-                    new() { Title = "전교인 체육대회", ThumbnailUrl = "", Url = "#" },
-                    new() { Title = "봄 심방주간", ThumbnailUrl = "", Url = "#" },
-                    new() { Title = "임직 감사예배", ThumbnailUrl = "", Url = "#" }
-                }
+                Events = events
             },
             Locate = new LocateVm
             {

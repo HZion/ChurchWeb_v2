@@ -31,7 +31,18 @@
                 <div class="gallery">
                     @foreach (var ev in Model.Events)
                     {
-                        <a href="@ev.Url" class="g">@ev.Title</a>
+                        <a href="@ev.Url" class="g">
+                            @if (!string.IsNullOrEmpty(ev.ThumbnailUrl))
+                            {
+                                <img src="@ev.ThumbnailUrl" alt="@ev.Title" />
+                            }
+                            else if (ev.Photos.Any())
+                            {
+                                @* 커버 이미지가 없으면 첫 번째 사진 사용 *@
+                                <img src="@ev.Photos.First()" alt="@ev.Title" />
+                            }
+                            <span class="gallery-title">@ev.Title</span>
+                        </a>
                     }
                 </div>
             </div>

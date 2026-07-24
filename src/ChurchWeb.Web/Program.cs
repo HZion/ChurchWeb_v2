@@ -148,6 +148,7 @@ builder.Services.AddSingleton<ChurchWeb.Infrastructure.Services.IChurchInfoCache
 builder.Services.AddScoped<ChurchWeb.Infrastructure.Services.IChurchInfoService>(sp =>
     sp.GetRequiredService<ChurchWeb.Infrastructure.Services.IChurchInfoCacheService>());
 builder.Services.AddScoped<ChurchWeb.Infrastructure.Services.IMenuAdminService, ChurchWeb.Infrastructure.Services.MenuAdminService>();
+builder.Services.AddScoped<ChurchWeb.Infrastructure.Services.IHomeSectionAdminService, ChurchWeb.Infrastructure.Services.HomeSectionAdminService>();
 builder.Services.AddScoped<ChurchWeb.Infrastructure.Services.IYouTubeService, ChurchWeb.Infrastructure.Services.ChurchYouTubeService>();
 builder.Services.AddScoped<ChurchWeb.Infrastructure.Services.IBulletinAdminService, ChurchWeb.Infrastructure.Services.BulletinAdminService>();
 builder.Services.AddScoped<ChurchWeb.Infrastructure.Services.IAlbumAdminService>(sp =>

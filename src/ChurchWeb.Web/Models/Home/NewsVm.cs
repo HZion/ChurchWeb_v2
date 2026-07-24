@@ -22,6 +22,7 @@ public class NoticeItem
 public class EventItem
 {
     public string Title { get; set; } = string.Empty;
-    public string ThumbnailUrl { get; set; } = string.Empty; // 행사 썸네일
+    public string ThumbnailUrl { get; set; } = string.Empty; // 행사 썸네일 (커버 이미지)
     public string Url { get; set; } = "#";
+    public List<string> Photos { get; set; } = new();        // 앨범 사진 목록 (최근 4개)
 }
