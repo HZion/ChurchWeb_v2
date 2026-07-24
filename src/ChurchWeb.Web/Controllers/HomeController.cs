@@ -56,7 +56,7 @@ public class HomeController : Controller
                         Background = "linear-gradient(180deg,var(--hero-o1),var(--hero-o2)),radial-gradient(120% 100% at 65% 20%,#7a5f42,#4a3626 45%,#2c2018)",
                         Kicker = "WELCOME TO OUR CHURCH",
                         Title = "모든 것이 합력하여<br>선을 이루느니라",
-                        Subtitle = "말씀 위에 세워진 공동체, ○○교회에 오신 것을 환영합니다.",
+                        Subtitle = "말씀 위에 세워진 공동체, 안디옥 교회에 오신 것을 환영합니다.",
                         PrimaryBtnText = "예배 안내 ↗",
                         PrimaryBtnUrl = "#quick",
                         SecondaryBtnText = "교회 소개 영상",
@@ -184,7 +184,7 @@ public class HomeController : Controller
                 About = new QuickCard
                 {
                     Title = "교회소개",
-                    Description = "○○교회는 이 시대 속에서 사랑과 믿음,\n그리고 순결한 가치로 세상을 아름답게 만들어가고자 합니다.",
+                    Description = "안디옥 교회는 이 시대 속에서 사랑과 믿음,\n그리고 순결한 가치로 세상을 아름답게 만들어가고자 합니다.",
                     LinkUrl = "#"
                 },
                 Bulletin = new BulletinCard
@@ -210,7 +210,7 @@ public class HomeController : Controller
                 Location = new QuickCard
                 {
                     Title = "오시는 길",
-                    Description = "○○교회로 오시는 길을 안내합니다. 예배의 자리에서 따뜻하게 만나겠습니다.",
+                    Description = "안디옥 교회로 오시는 길을 안내합니다. 예배의 자리에서 따뜻하게 만나겠습니다.",
                     LinkUrl = "#locate"
                 }
             },
@@ -262,7 +262,7 @@ public class HomeController : Controller
                 Address = "○○시 ○○구 ○○로 1, 304호",
                 Phone = "02-000-0000",
                 WorshipSchedule = "주일 1부 09:00 · 2부 11:00 · 수요 19:30 · 새벽 05:30",
-                BankAccount = "○○은행 000-00-00000 (○○교회)",
+                BankAccount = "○○은행 000-00-00000 (안디옥 교회)",
                 MapCaption = "지도 API 연동 영역 (Kakao / Naver Map)"
             }
         };

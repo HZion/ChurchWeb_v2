@@ -39,11 +39,11 @@ public class AboutService : IAboutService
         var model = new AboutVisionVm
         {
             PageTitle = "사명과 비전",
-            PageSubtitle = "말씀 위에 세워진 공동체, ○○교회가 나아가는 방향입니다.",
+            PageSubtitle = "말씀 위에 세워진 공동체, 안디옥 교회가 나아가는 방향입니다.",
             Tabs = GetAboutTabs(),
 
             MissionEyebrow = "OUR MISSION",
-            MissionLead = "○○교회는 <span class=\"hl\">오직 성경 위에 서서</span>, 예배와 말씀으로 하나님을 높이고 한 영혼을 사랑으로 세우는 공동체입니다.",
+            MissionLead = "안디옥 교회는 <span class=\"hl\">오직 성경 위에 서서</span>, 예배와 말씀으로 하나님을 높이고 한 영혼을 사랑으로 세우는 공동체입니다.",
             MissionBody = new List<string>
             {
                 "본 교회는 하나님의 말씀인 성경을 신앙과 삶의 유일한 기준으로 삼으며, 예수 그리스도를 구주와 주로 고백하는 성도들의 공동체입니다. 대한예수교장로회(합동)의 신앙고백 위에서 바른 예배와 건강한 교제, 다음 세대를 향한 신앙 교육에 힘씁니다.",
@@ -85,7 +85,7 @@ public class AboutService : IAboutService
 
             IntroEyebrow = "WORSHIP",
             IntroTitle = "함께 모여 드리는 예배",
-            IntroText = "○○교회는 말씀과 성령 안에서 하나님을 예배합니다. 모든 예배는 온라인으로도 실시간 중계됩니다.",
+            IntroText = "안디옥 교회는 말씀과 성령 안에서 하나님을 예배합니다. 모든 예배는 온라인으로도 실시간 중계됩니다.",
 
             Blocks = new List<WorshipBlock>
             {
@@ -140,7 +140,7 @@ public class AboutService : IAboutService
         var model = new AboutPeopleVm
         {
             PageTitle = "섬기는 사람들",
-            PageSubtitle = "○○교회를 섬기는 교역자와 직분자를 소개합니다.",
+            PageSubtitle = "안디옥 교회를 섬기는 교역자와 직분자를 소개합니다.",
             Tabs = GetAboutTabs(),
 
             LeadPastor = headPastor != null ? new LeadPastorVm
@@ -155,7 +155,7 @@ public class AboutService : IAboutService
                 Name = "홍길동",
                 Title = "담임목사",
                 Quote = "\"말씀과 기도로 섬기며, 한 영혼을 귀하게 여기는 목회를 꿈꿉니다.\"",
-                Desc = "○○신학대학원 졸업, 대한예수교장로회(합동) 목사 안수, ○○교회 부목사 역임",
+                Desc = "○○신학대학원 졸업, 대한예수교장로회(합동) 목사 안수, 안디옥 교회 부목사 역임",
                 Photo = ""
             },
 
@@ -193,7 +193,7 @@ public class AboutService : IAboutService
         var model = new AboutLocationVm
         {
             PageTitle = "오시는 길",
-            PageSubtitle = "○○교회를 찾아오시는 길을 안내합니다.",
+            PageSubtitle = "안디옥 교회를 찾아오시는 길을 안내합니다.",
             Tabs = GetAboutTabs(),
 
             MapEmbed = churchInfo?.MapEmbed ?? "[지도 자리표시자]",

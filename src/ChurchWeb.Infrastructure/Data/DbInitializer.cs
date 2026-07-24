@@ -33,16 +33,16 @@ public static class DbInitializer
         // 교회 정보
         var churchInfo = new ChurchInfo
         {
-            ChurchName = "○○교회",
+            ChurchName = "안디옥 교회",
             Denomination = "대한예수교장로회(합동)",
             Address = "○○시 ○○구 ○○로 1, 304호",
             Phone = "02-000-0000",
             Email = "church@example.com",
             YoutubeUrl = "",
-            OnlineOfferingAccount = "○○은행 000-00-00000 (○○교회)",
+            OnlineOfferingAccount = "○○은행 000-00-00000 (안디옥 교회)",
             MapEmbed = "",
             WorshipTimesJson = "주일 1부 09:00 · 2부 11:00 · 수요 19:30 · 새벽 05:30",
-            FooterText = "COPYRIGHT © ○○교회 · 대한예수교장로회(합동) ALL RIGHTS RESERVED.",
+            FooterText = "COPYRIGHT © 안디옥 교회 · 대한예수교장로회(합동) ALL RIGHTS RESERVED.",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -71,7 +71,7 @@ public static class DbInitializer
                 Background = "linear-gradient(180deg,var(--hero-o1),var(--hero-o2)),radial-gradient(120% 100% at 65% 20%,#7a5f42,#4a3626 45%,#2c2018)",
                 Kicker = "WELCOME TO OUR CHURCH",
                 Title = "모든 것이 합력하여<br>선을 이루느니라",
-                Subtitle = "말씀 위에 세워진 공동체, ○○교회에 오신 것을 환영합니다.",
+                Subtitle = "말씀 위에 세워진 공동체, 안디옥 교회에 오신 것을 환영합니다.",
                 PrimaryBtnText = "예배 안내 ↗",
                 PrimaryBtnUrl = "#quick",
                 SecondaryBtnText = "교회 소개 영상",
@@ -486,7 +486,7 @@ public static class DbInitializer
                 Category = "pastor",
                 Ministry = null,
                 PhotoUrl = null,
-                Intro = "○○신학대학원 졸업, 대한예수교장로회(합동) 목사 안수, ○○교회 부목사 역임",
+                Intro = "○○신학대학원 졸업, 대한예수교장로회(합동) 목사 안수, 안디옥 교회 부목사 역임",
                 Quote = "말씀과 기도로 섬기며, 한 영혼을 귀하게 여기는 목회를 꿈꿉니다.",
                 IsVisible = true,
                 SortOrder = 1,

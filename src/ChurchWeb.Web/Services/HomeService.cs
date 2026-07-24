@@ -169,7 +169,7 @@ public class HomeService : IHomeService
                     Title = "교회소개",
                     Description = churchInfo != null && !string.IsNullOrWhiteSpace(churchInfo.AnnualSlogan)
                         ? churchInfo.AnnualSlogan
-                        : "○○교회는 이 시대 속에서 사랑과 믿음,\n그리고 순결한 가치로 세상을 아름답게 만들어가고자 합니다.",
+                        : "안디옥 교회는 이 시대 속에서 사랑과 믿음,\n그리고 순결한 가치로 세상을 아름답게 만들어가고자 합니다.",
                     LinkUrl = "/about/vision"
                 },
                 Bulletin = new BulletinCard
@@ -199,7 +199,7 @@ public class HomeService : IHomeService
                     Title = "오시는 길",
                     Description = churchInfo != null
                         ? $"{churchInfo.ChurchName}로 오시는 길을 안내합니다. 예배의 자리에서 따뜻하게 만나겠습니다."
-                        : "○○교회로 오시는 길을 안내합니다. 예배의 자리에서 따뜻하게 만나겠습니다.",
+                        : "안디옥 교회로 오시는 길을 안내합니다. 예배의 자리에서 따뜻하게 만나겠습니다.",
                     LinkUrl = "/about/location"
                 }
             },
@@ -230,7 +230,7 @@ public class HomeService : IHomeService
                 Address = churchInfo?.Address ?? "전라남도 해남군 화산면 관동리 441-1",
                 Phone = churchInfo?.Phone ?? "02-000-0000",
                 WorshipSchedule = churchInfo?.WorshipTimesJson ?? "주일 1부 09:00 · 2부 11:00 · 수요 19:30 · 새벽 05:30",
-                BankAccount = churchInfo?.OnlineOfferingAccount ?? "○○은행 000-00-00000 (○○교회)",
+                BankAccount = churchInfo?.OnlineOfferingAccount ?? "○○은행 000-00-00000 (안디옥 교회)",
                 MapCaption = "지도 API 연동 영역 (Kakao / Naver Map)",
                 Latitude = churchInfo?.Latitude ?? 34.47583905316223,
                 Longitude = churchInfo?.Longitude ?? 126.47554034813862
