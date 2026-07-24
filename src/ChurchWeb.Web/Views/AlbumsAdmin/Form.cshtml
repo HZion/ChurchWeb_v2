@@ -1,0 +1,232 @@
+@model ChurchWeb.Web.Models.Admin.AlbumFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "앨범 등록" : "앨범 수정";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>@ViewData["Title"]</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="/Admin/Albums">갤러리 앨범 관리</a></li>
+                    <li class="breadcrumb-item active">@(Model.Id == 0 ? "등록" : "수정")</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 앨범 기본 정보 -->
+    <div class="col-md-6">
+        <div class="admin-card">
+            <h5 class="card-title mb-3">앨범 정보</h5>
+            <form asp-action="Save" asp-controller="AlbumsAdmin" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">제목 <span class="text-danger">*</span></label>
+                    <input asp-for="Title" class="form-control" placeholder="앨범 제목을 입력하세요" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EventDate" class="form-label">이벤트 날짜 <span class="text-danger">*</span></label>
+                        <input asp-for="EventDate" type="date" class="form-control" />
+                        <span asp-validation-for="EventDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Category" class="form-label">카테고리</label>
+                        <input asp-for="Category" class="form-control" placeholder="예: 주일예배, 수련회" />
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">설명</label>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="앨범 설명을 입력하세요"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CoverImage" class="form-label">
+                        표지 이미지 @(Model.Id == 0 ? "" : "(변경 시에만 업로드)")
+                    </label>
+                    <input asp-for="CoverImage" type="file" class="form-control" accept="image/*" />
+                    <span asp-validation-for="CoverImage" class="text-danger"></span>
+                    <small class="form-text text-muted">이미지 파일만 업로드 가능합니다. 최대 크기: 10MB</small>
+
+                    @if (Model.Id > 0 && !string.IsNullOrEmpty(Model.ExistingCoverImageUrl))
+                    {
+                        <div class="mt-2">
+                            <strong>현재 표지:</strong><br/>
+                            <img src="@Model.ExistingCoverImageUrl" alt="표지" class="img-thumbnail mt-1" style="max-width: 200px;" />
+                        </div>
+                    }
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="SortOrder" class="form-label">순서</label>
+                        <input asp-for="SortOrder" type="number" class="form-control" min="0" />
+                        <span asp-validation-for="SortOrder" class="text-danger"></span>
+                        <small class="form-text text-muted">0이면 자동 설정</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch mt-4">
+                            <input asp-for="IsVisible" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsVisible" class="form-check-label">공개 사이트에 표시</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/Admin/Albums" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Id == 0 ? "등록" : "저장")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 사진 관리 (수정 모드에서만 표시) -->
+    @if (Model.Id > 0)
+    {
+        <div class="col-md-6">
+            <div class="admin-card">
+                <h5 class="card-title mb-3">사진 관리 (@Model.Photos.Count 장)</h5>
+
+                <!-- 사진 업로드 폼 -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">사진 추가</h6>
+                        <form id="photoUploadForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="AlbumId" value="@Model.Id" />
+
+                            <div class="mb-2">
+                                <input type="file" name="PhotoFile" id="photoFile" class="form-control form-control-sm" accept="image/*" required />
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" name="Caption" id="photoCaption" class="form-control form-control-sm" placeholder="사진 설명 (선택사항)" />
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="bi bi-upload"></i> 업로드
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 사진 목록 -->
+                <div id="photoGallery" class="row g-2">
+                    @foreach (var photo in Model.Photos.OrderBy(p => p.SortOrder))
+                    {
+                        <div class="col-6 photo-item" data-photo-id="@photo.Id">
+                            <div class="card">
+                                <img src="@photo.ImageUrl" class="card-img-top" alt="@photo.Caption" style="height: 150px; object-fit: cover;" />
+                                <div class="card-body p-2">
+                                    @if (!string.IsNullOrEmpty(photo.Caption))
+                                    {
+                                        <p class="card-text small mb-1">@photo.Caption</p>
+                                    }
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">순서: @photo.SortOrder</small>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePhoto(@photo.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Photos.Count == 0)
+                {
+                    <div class="alert alert-info">
+                        아직 사진이 없습니다. 위 폼을 사용하여 사진을 추가하세요.
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    @if (Model.Id > 0)
+    {
+        <script>
+            // 사진 업로드
+            document.getElementById('photoUploadForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                try {
+                    const response = await fetch('/Admin/Albums/UploadPhoto', {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    alert('업로드 중 오류가 발생했습니다.');
+                }
+            });
+
+            // 사진 삭제
+            async function deletePhoto(photoId) {
+                if (!confirm('이 사진을 삭제하시겠습니까?')) return;
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                try {
+                    const response = await fetch(`/Admin/Albums/DeletePhoto/${photoId}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            }
+        </script>
+    }
+}

@@ -1,0 +1,31 @@
+@model ChurchWeb.Web.Models.Home.SermonsVm
+
+<section class="section" id="sermons">
+    <div class="container">
+        <div class="section-head">
+            <div class="ey">@Model.SectionEyebrow</div>
+            <h2>@Model.SectionTitle</h2>
+            <p>@Model.SectionDescription</p>
+        </div>
+        <div class="rail">
+            @foreach (var sermon in Model.Sermons)
+            {
+                <div class="sermon">
+                    <div class="thumb">
+                        <span class="cat">@sermon.Category</span>
+                        썸네일
+                        <span class="dur">@sermon.Duration</span>
+                    </div>
+                    <div class="body">
+                        <div class="verse">@sermon.Verse</div>
+                        <div class="title">@sermon.Title</div>
+                        <div class="meta">
+                            <span>@sermon.Preacher</span>
+                            <span>@sermon.Date</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

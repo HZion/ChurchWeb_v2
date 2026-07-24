@@ -1,0 +1,24 @@
+@model ChurchWeb.Web.Models.Home.PastorVm
+
+<section class="section bg-alt" id="pastor">
+    <div class="container">
+        <div class="pastor">
+            <div class="photo">
+                @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+                {
+                    <img src="@Model.PhotoUrl" alt="담임목사" loading="lazy" />
+                }
+                else
+                {
+                    <text>담임목사 사진</text>
+                }
+            </div>
+            <div class="text">
+                <div class="role">@Model.Role</div>
+                <h2>@Model.Title</h2>
+                <p>@Model.Message</p>
+                <a href="@Model.MoreUrl" class="btn btn-ghost">인사말 더보기 +</a>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,101 @@
+@model ChurchWeb.Web.Models.News.AlbumDetailVm
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 소식 &nbsp;›&nbsp; <b>갤러리</b>", Model.Title, Model.Date)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "gallery")' />
+
+<main class="content album-detail">
+    <div class="container">
+
+        <!-- 앨범 정보 -->
+        <div class="album-info">
+            <div class="meta">
+                <span class="cat">@Model.Category</span>
+                <span class="date">@Model.Date</span>
+                <span class="count">@(Model.Photos.Count)장</span>
+            </div>
+            <h1>@Model.Title</h1>
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p class="desc">@Model.Description</p>
+            }
+        </div>
+
+        @if (Model.Photos.Count == 0)
+        {
+            <!-- 빈 상태 -->
+            <div class="empty-state">
+                <div class="empty-icon">📷</div>
+                <h3>등록된 사진이 없습니다</h3>
+            </div>
+        }
+        else
+        {
+            <!-- 사진 그리드 (라이트박스 연동) -->
+            <div class="photo-grid">
+                @for (int i = 0; i < Model.Photos.Count; i++)
+                {
+                    <div class="photo-item" data-index="@i">
+                        <div class="photo-img">
+                            <img src="@Model.Photos[i]" alt="Photo @(i + 1)" loading="lazy" />
+                        </div>
+                        <div class="photo-overlay">
+                            <span class="icon">🔍</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- 이전/다음 네비게이션 -->
+        <div class="nav-items">
+            @if (Model.Prev != null)
+            {
+                <a href="/news/gallery/@Model.Prev.Id" class="nav-prev">
+                    <div class="label">‹ 이전 앨범</div>
+                    <div class="title">@Model.Prev.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-prev disabled"></div>
+            }
+
+            @if (Model.Next != null)
+            {
+                <a href="/news/gallery/@Model.Next.Id" class="nav-next">
+                    <div class="label">다음 앨범 ›</div>
+                    <div class="title">@Model.Next.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-next disabled"></div>
+            }
+        </div>
+
+    </div>
+</main>
+
+<!-- 라이트박스 모달 -->
+<div class="lightbox" id="lightbox" style="display:none;">
+    <div class="lightbox-overlay"></div>
+    <div class="lightbox-content">
+        <button class="lightbox-close">&times;</button>
+        <button class="lightbox-prev">‹</button>
+        <button class="lightbox-next">›</button>
+        <div class="lightbox-img"></div>
+        <div class="lightbox-counter"><span class="current">1</span> / <span class="total">@Model.Photos.Count</span></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/lightbox.js"></script>
+    <script>
+        // 사진 데이터 전달
+        const photos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Photos));
+        initLightbox(photos);
+    </script>
+}

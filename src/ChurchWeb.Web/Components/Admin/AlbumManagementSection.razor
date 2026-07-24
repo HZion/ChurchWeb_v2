@@ -1,0 +1,526 @@
+@using ChurchWeb.Core.Entities.News
+@using ChurchWeb.Infrastructure.Services
+@using Microsoft.EntityFrameworkCore
+@using ChurchWeb.Web.Components.Shared
+@inject IAlbumAdminService AlbumService
+@inject ILogger<AlbumManagementSection> Logger
+@inject IJSRuntime JS
+@inject IWebHostEnvironment WebEnv
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">갤러리 관리</h2>
+        <p>사진 앨범을 생성하고 관리합니다.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error">
+            @errorMessage
+        </div>
+    }
+
+    @if (editingAlbumId == 0)
+    {
+        <!-- 앨범 목록 -->
+        <div class="card">
+            <div class="card-head">
+                <h3>앨범 목록</h3>
+                <button class="btn primary" @onclick="CreateNewAlbum">＋ 새 앨범 만들기</button>
+            </div>
+            <div class="sub">등록된 앨범을 확인하고 관리합니다.</div>
+
+            <div class="info-strip">ⓘ 각 앨범을 클릭하여 사진을 관리할 수 있습니다.</div>
+
+            @if (albums.Any())
+            {
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:20px">
+                    @foreach (var album in albums.OrderByDescending(a => a.EventDate))
+                    {
+                        <div class="album-card" style="border:1px solid #ddd;border-radius:12px;overflow:hidden;cursor:pointer" @onclick="@(() => EditAlbum(album.Id))">
+                            <div style="width:100%;height:180px;background:#f5f5f5;position:relative">
+                                @if (!string.IsNullOrEmpty(album.CoverImageUrl))
+                                {
+                                    <img src="@album.CoverImageUrl" alt="@album.Title" style="width:100%;height:100%;object-fit:cover" />
+                                }
+                                else
+                                {
+                                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999">
+                                        📷 표지 없음
+                                    </div>
+                                }
+                                <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:white;padding:4px 8px;border-radius:4px;font-size:12px">
+                                    @($"사진 {album.Photos.Count}개")
+                                </div>
+                            </div>
+                            <div style="padding:12px">
+                                <div style="font-weight:700;margin-bottom:4px">@album.Title</div>
+                                <div style="font-size:13px;color:#666;margin-bottom:8px">@album.EventDate.ToString("yyyy-MM-dd")</div>
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <label class="toggle" @onclick:stopPropagation="true">
+                                        <input type="checkbox" checked="@album.IsVisible" @onchange="@(e => ToggleAlbumVisibility(album, (bool)e.Value!))" />
+                                        <span class="tr"></span>
+                                    </label>
+                                    <div class="rowacts" @onclick:stopPropagation="true">
+                                        <button class="icon-btn" @onclick="@(() => EditAlbum(album.Id))">
+                                            <Icon Name="pencil" />
+                                        </button>
+                                        <button class="icon-btn danger" @onclick="@(() => DeleteAlbum(album))">
+                                            <Icon Name="trash" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <p>등록된 앨범이 없습니다.</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- 앨범 편집 -->
+        <div class="card">
+            <div class="card-head">
+                <h3>@(currentAlbum?.Id == 0 ? "새 앨범 만들기" : "앨범 편집")</h3>
+                <button class="btn ghost" @onclick="BackToList">
+                    <Icon Name="x" />
+                    닫기
+                </button>
+            </div>
+
+            @if (currentAlbum != null)
+            {
+                <EditForm Model="@currentAlbum" OnValidSubmit="SaveAlbum">
+                    <div class="grid g2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>앨범 제목</label>
+                            <InputText @bind-Value="currentAlbum.Title" placeholder="예: 2026 여름성경학교" />
+                        </div>
+                        <div class="field">
+                            <label>행사 날짜</label>
+                            <InputDate @bind-Value="currentAlbum.EventDate" />
+                        </div>
+                    </div>
+
+                    <div class="grid g2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>카테고리 (선택)</label>
+                            <InputText @bind-Value="currentAlbum.Category" placeholder="예: 행사, 예배, 교육" />
+                        </div>
+                        <div class="field">
+                            <label>
+                                <input type="checkbox" @bind="currentAlbum.IsVisible" style="margin-right:6px" />
+                                공개 페이지에 노출
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-bottom:14px">
+                        <label>설명 (선택)</label>
+                        <InputTextArea @bind-Value="currentAlbum.Description" rows="2" placeholder="앨범 설명..." />
+                    </div>
+
+                    <div class="flex-end" style="margin-bottom:20px">
+                        <button type="submit" class="btn primary">
+                            <Icon Name="save" />
+                            저장하기
+                        </button>
+                    </div>
+                </EditForm>
+
+                <hr style="margin:24px 0;border:none;border-top:1px solid #eee" />
+
+                <h3 style="margin-bottom:12px">사진 관리</h3>
+                <div class="sub">사진을 업로드하거나 순서를 변경할 수 있습니다. 첫 번째 사진이 앨범 표지로 사용됩니다.</div>
+
+                <div class="field" style="margin:16px 0">
+                    <label>사진 추가 (다중 선택 가능)</label>
+                    <InputFile OnChange="OnPhotosSelected" accept="image/*" multiple />
+                    @if (uploadingPhotos)
+                    {
+                        <div class="hint" style="margin-top:8px;color:#2196F3">업로드 중...</div>
+                    }
+                </div>
+
+                @if (albumPhotos.Any())
+                {
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:16px">
+                        @foreach (var photo in albumPhotos.OrderBy(p => p.SortOrder))
+                        {
+                            var index = albumPhotos.OrderBy(p => p.SortOrder).ToList().IndexOf(photo);
+                            <div style="position:relative;border:1px solid #ddd;border-radius:8px;overflow:hidden">
+                                <img src="@photo.ImageUrl" alt="@photo.Caption" style="width:100%;height:150px;object-fit:cover" />
+                                <div style="position:absolute;top:4px;left:4px;display:flex;gap:4px">
+                                    @if (index > 0)
+                                    {
+                                        <button class="icon-btn" style="background:rgba(0,0,0,0.7);color:white;border:none" @onclick="@(() => MovePhotoUp(photo))">
+                                            <Icon Name="arrow-up" />
+                                        </button>
+                                    }
+                                    @if (index < albumPhotos.Count - 1)
+                                    {
+                                        <button class="icon-btn" style="background:rgba(0,0,0,0.7);color:white;border:none" @onclick="@(() => MovePhotoDown(photo))">
+                                            <Icon Name="arrow-down" />
+                                        </button>
+                                    }
+                                </div>
+                                <div style="position:absolute;top:4px;right:4px">
+                                    <button class="icon-btn danger" style="background:rgba(0,0,0,0.7);color:white;border:none" @onclick="@(() => DeletePhoto(photo))">
+                                        <Icon Name="trash" />
+                                    </button>
+                                </div>
+                                @if (index == 0)
+                                {
+                                    <div style="position:absolute;bottom:0;left:0;right:0;padding:4px 6px;font-size:11px;background:rgba(67,160,71,0.9);color:white;text-align:center">표지</div>
+                                }
+                                @if (!string.IsNullOrEmpty(photo.Caption))
+                                {
+                                    <div style="padding:6px;font-size:12px;background:rgba(255,255,255,0.9)">@photo.Caption</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <p>아직 사진이 없습니다. 위에서 사진을 추가하세요.</p>
+                    </div>
+                }
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private List<Album> albums = new();
+    private Album? currentAlbum = null;
+    private List<AlbumPhoto> albumPhotos = new();
+    private int editingAlbumId = 0;
+    private bool uploadingPhotos = false;
+    private string successMessage = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlbums();
+    }
+
+    private async Task LoadAlbums()
+    {
+        try
+        {
+            var (result, _) = await AlbumService.GetPagedAlbumsAsync(
+                page: 1,
+                pageSize: 1000,
+                sortBy: "EventDate",
+                sortDescending: true
+            );
+            albums = result.ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading albums");
+            errorMessage = "앨범 목록을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task CreateNewAlbum()
+    {
+        try
+        {
+            var newAlbum = new Album
+            {
+                EventDate = DateTime.UtcNow.Date,
+                IsVisible = true,
+                Title = "새 앨범",
+                Description = "",
+                Category = "",
+                CoverImageUrl = ""
+            };
+
+            // 바로 DB에 저장하여 ID 생성
+            await AlbumService.CreateAlbumAsync(newAlbum);
+
+            currentAlbum = newAlbum;
+            editingAlbumId = newAlbum.Id;
+            albumPhotos.Clear();
+            successMessage = "새 앨범이 생성되었습니다. 정보를 수정하고 사진을 추가하세요.";
+            errorMessage = "";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating new album");
+            errorMessage = "앨범 생성 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task EditAlbum(int albumId)
+    {
+        try
+        {
+            var album = await AlbumService.GetAlbumByIdWithPhotosAsync(albumId);
+            if (album != null)
+            {
+                currentAlbum = album;
+                albumPhotos = album.Photos.OrderBy(p => p.SortOrder).ToList();
+                editingAlbumId = albumId;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading album");
+            errorMessage = "앨범을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task BackToList()
+    {
+        editingAlbumId = 0;
+        currentAlbum = null;
+        albumPhotos.Clear();
+        await LoadAlbums();
+        StateHasChanged();
+    }
+
+    private async Task SaveAlbum()
+    {
+        if (currentAlbum == null) return;
+
+        try
+        {
+            // Validation
+            if (string.IsNullOrWhiteSpace(currentAlbum.Title))
+            {
+                errorMessage = "앨범 제목을 입력하세요.";
+                successMessage = "";
+                return;
+            }
+
+            // Update album info
+            await AlbumService.UpdateAlbumAsync(currentAlbum);
+            successMessage = "앨범 정보가 성공적으로 수정되었습니다.";
+            errorMessage = "";
+            await LoadAlbums();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"저장 중 오류가 발생했습니다: {ex.Message}";
+            successMessage = "";
+            Logger.LogError(ex, "Error saving album");
+        }
+    }
+
+    private async Task OnPhotosSelected(InputFileChangeEventArgs e)
+    {
+        if (currentAlbum == null) return;
+
+        uploadingPhotos = true;
+        StateHasChanged();
+
+        try
+        {
+            foreach (var file in e.GetMultipleFiles(20)) // Max 20 files at once
+            {
+                const long maxFileSize = 10 * 1024 * 1024;
+                if (file.Size > maxFileSize)
+                {
+                    errorMessage = $"{file.Name}: 파일 크기는 10MB 이하여야 합니다.";
+                    continue;
+                }
+
+                using var stream = file.OpenReadStream(maxAllowedSize: maxFileSize);
+                var imageUrl = await AlbumService.SavePhotoFileAsync(stream, file.Name);
+
+                var photo = new AlbumPhoto
+                {
+                    AlbumId = currentAlbum.Id,
+                    ImageUrl = imageUrl,
+                    Caption = "",
+                    SortOrder = albumPhotos.Count + 1
+                };
+
+                await AlbumService.AddPhotoAsync(photo);
+                albumPhotos.Add(photo);
+            }
+
+            // 첫 번째 사진을 표지로 업데이트
+            await UpdateAlbumCover();
+
+            successMessage = "사진이 업로드되었습니다.";
+            errorMessage = "";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"사진 업로드 중 오류가 발생했습니다: {ex.Message}";
+            Logger.LogError(ex, "Error uploading photos");
+        }
+        finally
+        {
+            uploadingPhotos = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletePhoto(AlbumPhoto photo)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "이 사진을 삭제하시겠습니까?");
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await AlbumService.DeletePhotoAsync(photo.Id);
+            if (result)
+            {
+                albumPhotos.Remove(photo);
+
+                // 첫 번째 사진을 표지로 업데이트
+                await UpdateAlbumCover();
+
+                successMessage = "사진이 삭제되었습니다.";
+                errorMessage = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"사진 삭제 중 오류가 발생했습니다: {ex.Message}";
+            Logger.LogError(ex, "Error deleting photo");
+        }
+    }
+
+    private async Task MovePhotoUp(AlbumPhoto photo)
+    {
+        try
+        {
+            var orderedPhotos = albumPhotos.OrderBy(p => p.SortOrder).ToList();
+            var index = orderedPhotos.IndexOf(photo);
+            if (index <= 0) return;
+
+            // Swap sort orders
+            var prevPhoto = orderedPhotos[index - 1];
+            var temp = photo.SortOrder;
+            photo.SortOrder = prevPhoto.SortOrder;
+            prevPhoto.SortOrder = temp;
+
+            await AlbumService.UpdatePhotoAsync(photo);
+            await AlbumService.UpdatePhotoAsync(prevPhoto);
+
+            // 첫 번째 사진이 변경되었으면 표지 업데이트
+            if (index == 1)
+            {
+                await UpdateAlbumCover();
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"사진 순서 변경 중 오류가 발생했습니다: {ex.Message}";
+            Logger.LogError(ex, "Error moving photo up");
+        }
+    }
+
+    private async Task MovePhotoDown(AlbumPhoto photo)
+    {
+        try
+        {
+            var orderedPhotos = albumPhotos.OrderBy(p => p.SortOrder).ToList();
+            var index = orderedPhotos.IndexOf(photo);
+            if (index < 0 || index >= orderedPhotos.Count - 1) return;
+
+            // Swap sort orders
+            var nextPhoto = orderedPhotos[index + 1];
+            var temp = photo.SortOrder;
+            photo.SortOrder = nextPhoto.SortOrder;
+            nextPhoto.SortOrder = temp;
+
+            await AlbumService.UpdatePhotoAsync(photo);
+            await AlbumService.UpdatePhotoAsync(nextPhoto);
+
+            // 첫 번째 사진이 변경되었으면 표지 업데이트
+            if (index == 0)
+            {
+                await UpdateAlbumCover();
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"사진 순서 변경 중 오류가 발생했습니다: {ex.Message}";
+            Logger.LogError(ex, "Error moving photo down");
+        }
+    }
+
+    private async Task UpdateAlbumCover()
+    {
+        if (currentAlbum == null) return;
+
+        try
+        {
+            var firstPhoto = albumPhotos.OrderBy(p => p.SortOrder).FirstOrDefault();
+            var newCoverUrl = firstPhoto?.ImageUrl ?? "";
+
+            if (currentAlbum.CoverImageUrl != newCoverUrl)
+            {
+                currentAlbum.CoverImageUrl = newCoverUrl;
+                await AlbumService.UpdateAlbumAsync(currentAlbum);
+                await LoadAlbums();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating album cover");
+        }
+    }
+
+    private async Task DeleteAlbum(Album album)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"{album.Title} 앨범을 삭제하시겠습니까? 모든 사진이 함께 삭제됩니다.");
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await AlbumService.DeleteAlbumAsync(album.Id);
+            if (result)
+            {
+                successMessage = "앨범이 삭제되었습니다.";
+                errorMessage = "";
+                await LoadAlbums();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"앨범 삭제 중 오류가 발생했습니다: {ex.Message}";
+            Logger.LogError(ex, "Error deleting album");
+        }
+    }
+
+    private async Task ToggleAlbumVisibility(Album album, bool isVisible)
+    {
+        try
+        {
+            album.IsVisible = isVisible;
+            await AlbumService.UpdateAlbumAsync(album);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling album visibility");
+            errorMessage = "노출 설정 변경 중 오류가 발생했습니다.";
+        }
+    }
+}

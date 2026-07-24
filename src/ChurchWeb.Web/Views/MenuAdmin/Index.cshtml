@@ -1,0 +1,184 @@
+@model ChurchWeb.Web.Models.Admin.MenuListViewModel
+@{
+    ViewData["Title"] = "메뉴 관리";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h2 class="serif">메뉴 관리</h2>
+        <p>대시보드 / 메뉴 관리</p>
+    </div>
+    <div>
+        <a href="/Admin/Menu/Create" class="btn primary">
+            <i class="bi bi-plus-lg"></i> 새 메뉴 추가
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+
+<div class="card">
+    <h3>메뉴 목록 (@Model.MenuItems.Count 개)</h3>
+
+    @if (Model.MenuItems.Any())
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">순서</th>
+                        <th>제목</th>
+                        <th style="width: 250px;">URL</th>
+                        <th style="width: 120px;">부모 메뉴</th>
+                        <th style="width: 80px;">하위</th>
+                        <th style="width: 80px;">표시</th>
+                        <th style="width: 150px;" class="text-center">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var menu in Model.MenuItems.Where(m => m.ParentId == null).OrderBy(m => m.SortOrder))
+                    {
+                        <tr id="menu-@menu.Id" class="@(menu.ParentId == null ? "fw-semibold" : "")">
+                            <td class="text-center">
+                                <span class="badge bg-secondary">@menu.SortOrder</span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(menu.IconClass))
+                                {
+                                    <i class="@menu.IconClass me-2"></i>
+                                }
+                                @menu.Title
+                                @if (menu.OpenInNewTab)
+                                {
+                                    <i class="bi bi-box-arrow-up-right text-muted small ms-1"></i>
+                                }
+                            </td>
+                            <td><small class="text-muted">@menu.Url</small></td>
+                            <td>-</td>
+                            <td class="text-center">
+                                @if (menu.ChildCount > 0)
+                                {
+                                    <span class="badge bg-info">@menu.ChildCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="tag @(menu.IsVisible ? "g" : "")">@(menu.IsVisible ? "표시" : "숨김")</span>
+                            </td>
+                            <td class="text-center">
+                                <a href="/Admin/Menu/Edit/@menu.Id" class="btn ghost" style="padding:0.25rem 0.5rem;font-size:0.875rem" title="수정">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn ghost" style="padding:0.25rem 0.5rem;font-size:0.875rem;color:var(--red)" data-id="@menu.Id" title="삭제">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        @* 하위 메뉴 표시 *@
+                        @foreach (var child in Model.MenuItems.Where(m => m.ParentId == menu.Id).OrderBy(m => m.SortOrder))
+                        {
+                            <tr id="menu-@child.Id" class="table-secondary bg-opacity-10">
+                                <td class="text-center ps-4">
+                                    <small class="badge bg-light text-dark">@child.SortOrder</small>
+                                </td>
+                                <td class="ps-5">
+                                    <i class="bi bi-arrow-return-right me-2 text-muted"></i>
+                                    @if (!string.IsNullOrEmpty(child.IconClass))
+                                    {
+                                        <i class="@child.IconClass me-2"></i>
+                                    }
+                                    @child.Title
+                                    @if (child.OpenInNewTab)
+                                    {
+                                        <i class="bi bi-box-arrow-up-right text-muted small ms-1"></i>
+                                    }
+                                </td>
+                                <td><small class="text-muted">@child.Url</small></td>
+                                <td><small>@menu.Title</small></td>
+                                <td class="text-center">-</td>
+                                <td>
+                                    <span class="tag @(child.IsVisible ? "g" : "")">@(child.IsVisible ? "표시" : "숨김")</span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="/Admin/Menu/Edit/@child.Id" class="btn ghost" style="padding:0.25rem 0.5rem;font-size:0.875rem" title="수정">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn ghost delete-menu" style="padding:0.25rem 0.5rem;font-size:0.875rem;color:var(--red)" data-id="@child.Id" title="삭제">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <p class="text-muted">등록된 메뉴가 없습니다.</p>
+            <a href="/Admin/Menu/Create" class="btn primary">첫 메뉴 추가하기</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle visibility
+        document.querySelectorAll('.toggle-visibility').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                const response = await fetch(`/Admin/Menu/ToggleVisibility/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        location.reload();
+                    }
+                }
+            });
+        });
+
+        // Delete menu
+        document.querySelectorAll('.delete-menu').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                if (!confirm('이 메뉴를 삭제하시겠습니까?')) return;
+
+                const id = this.dataset.id;
+                const response = await fetch(`/Admin/Menu/Delete/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        document.getElementById(`menu-${id}`).remove();
+                        alert(data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                }
+            });
+        });
+    </script>
+}

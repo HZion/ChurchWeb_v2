@@ -1,0 +1,84 @@
+@model ChurchWeb.Web.Models.About.AboutVisionVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+    var currentKey = "vision"; // 현재 페이지 Key
+}
+
+<!-- 페이지 배너 -->
+<section class="page-hero">
+    <div class="container inner">
+        <div class="crumb">홈 &nbsp;›&nbsp; 교회소개 &nbsp;›&nbsp; <b>@Model.PageTitle</b></div>
+        <h1>@Model.PageTitle</h1>
+        <div class="sub">@Model.PageSubtitle</div>
+    </div>
+</section>
+
+<!-- 서브 탭 (교회소개 하위 6개, 데이터 기반) -->
+<nav class="subnav">
+    <div class="container">
+        @foreach (var tab in Model.Tabs.Where(t => t.IsVisible).OrderBy(t => t.SortOrder))
+        {
+            <a href="@tab.Url" class="@(tab.Key == currentKey ? "active" : "")">@tab.Title</a>
+        }
+    </div>
+</nav>
+
+<!-- 본문 -->
+<main class="content">
+    <div class="container">
+
+        <!-- 사명 -->
+        <div class="sec-ey">@Model.MissionEyebrow</div>
+        <p class="lead">@Html.Raw(Model.MissionLead)</p>
+        <div class="body-copy">
+            @foreach (var paragraph in Model.MissionBody)
+            {
+                <p>@paragraph</p>
+            }
+        </div>
+
+        <!-- 비전 -->
+        <div class="block">
+            <div class="block-title">비전</div>
+            <div class="block-desc">우리가 함께 바라보며 나아가는 세 가지 방향입니다.</div>
+            <div class="vision-grid">
+                @foreach (var item in Model.VisionItems.OrderBy(v => v.SortOrder))
+                {
+                    <div class="vcard">
+                        <div class="num">@item.Label</div>
+                        <h3>@item.Title</h3>
+                        <p>@item.Desc</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- 핵심 가치 -->
+        <div class="block">
+            <div class="block-title">핵심 가치</div>
+            <div class="block-desc">모든 사역의 바탕이 되는 네 가지 가치입니다.</div>
+            <div class="values">
+                @foreach (var item in Model.ValueItems.OrderBy(v => v.SortOrder))
+                {
+                    <div class="v">
+                        <div class="k">@item.No</div>
+                        <div>
+                            <h4>@item.Title</h4>
+                            <p>@item.Desc</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 표어 밴드 -->
+    <div class="motto-band">
+        <div class="container">
+            <div class="y">@Model.MottoYear · 올해의 표어</div>
+            <div class="m">@Html.Raw(Model.MottoText)</div>
+            <div class="ref">@Model.ScriptureRef</div>
+        </div>
+    </div>
+</main>

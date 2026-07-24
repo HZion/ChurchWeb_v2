@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 온라인 전도카드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --beige: #F3EBDD;
+            --cream: #FAF5EC;
+            --paper: #FFFFFF;
+            --espresso: #2E1F16;
+            --ink: #3B2C20;
+            --muted: #8b7a66;
+            --gold: #B8912E;
+            --gold-soft: #CBB07A;
+            --line: #e8dfcd;
+            --serif: 'Noto Serif KR', serif;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #e7e2d8;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 브랜드 바 */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 34px 22px 14px;
+            background: var(--cream);
+        }
+        .brand .logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: var(--espresso);
+            color: var(--gold-soft);
+            font-family: var(--serif);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+        }
+        .brand b {
+            font-family: var(--serif);
+            font-size: 16px;
+            color: var(--espresso);
+        }
+        .brand span {
+            display: block;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: .02em;
+        }
+
+        /* 푸터 */
+        .foot {
+            margin-top: 28px;
+            padding: 22px;
+            text-align: center;
+            background: var(--espresso);
+            color: #cbb99f;
+        }
+        .foot .fname {
+            font-family: var(--serif);
+            font-size: 14px;
+            color: #f3e9d7;
+        }
+        .foot .fc {
+            font-size: 10.5px;
+            margin-top: 8px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    @RenderBody()
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

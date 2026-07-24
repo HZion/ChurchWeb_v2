@@ -1,0 +1,77 @@
+@model ChurchWeb.Web.Models.Home.HomeViewModel
+@{
+    ViewData["Title"] = "홈";
+}
+
+@* 섹션 메타데이터 기반 동적 렌더링 *@
+@foreach (var section in Model.Sections.Where(s => s.IsVisible).OrderBy(s => s.SortOrder))
+{
+    switch (section.Key)
+    {
+        case "hero":
+            @await Html.PartialAsync("Sections/_Hero", Model.Hero)
+            break;
+
+        case "vision":
+            @await Html.PartialAsync("Sections/_Vision", Model.Vision)
+            break;
+
+        case "sermons":
+            @await Html.PartialAsync("Sections/_Sermons", Model.Sermons)
+            break;
+
+        case "quick":
+            @await Html.PartialAsync("Sections/_Quick", Model.Quick)
+            break;
+
+        case "media":
+            @await Html.PartialAsync("Sections/_Media", Model.Media)
+            break;
+
+        case "pastor":
+            @await Html.PartialAsync("Sections/_Pastor", Model.Pastor)
+            break;
+
+        case "news":
+            @await Html.PartialAsync("Sections/_News", Model.News)
+            break;
+
+        case "locate":
+            @await Html.PartialAsync("Sections/_Locate", Model.Locate)
+            break;
+    }
+}
+
+@section Scripts {
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@ViewBag.KakaoMapApiKey"></script>
+    <script>
+        // 카카오 맵 초기화 (홈 화면)
+        (function() {
+            const lat = @(Model.Locate.Latitude?.ToString("F14", System.Globalization.CultureInfo.InvariantCulture) ?? "34.47583905316223");
+            const lng = @(Model.Locate.Longitude?.ToString("F14", System.Globalization.CultureInfo.InvariantCulture) ?? "126.47554034813862");
+
+            const container = document.getElementById('home-kakao-map');
+            if (container) {
+                const options = {
+                    center: new kakao.maps.LatLng(lat, lng),
+                    level: 3
+                };
+
+                const map = new kakao.maps.Map(container, options);
+
+                // 마커 추가
+                const markerPosition = new kakao.maps.LatLng(lat, lng);
+                const marker = new kakao.maps.Marker({
+                    position: markerPosition
+                });
+                marker.setMap(map);
+
+                // 인포윈도우 추가
+                const infowindow = new kakao.maps.InfoWindow({
+                    content: '<div style="padding:8px 12px;font-size:13px;white-space:nowrap">해남 안디옥 교회</div>'
+                });
+                infowindow.open(map, marker);
+            }
+        })();
+    </script>
+}

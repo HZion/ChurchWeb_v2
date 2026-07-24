@@ -1,0 +1,236 @@
+@model ChurchWeb.Web.Models.Admin.NoticeListViewModel
+@{
+    ViewData["Title"] = "교회 소식 관리";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>교회 소식 관리</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item active">교회 소식 관리</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="/Admin/Notices/Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 소식 등록
+        </a>
+    </div>
+</div>
+
+<!-- 검색 및 필터 -->
+<div class="admin-card mb-3">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <input type="text" name="searchTerm" class="form-control" placeholder="제목 또는 내용 검색" value="@Model.Filter.SearchTerm" />
+        </div>
+        <div class="col-md-2">
+            <select name="categoryKey" class="form-select">
+                <option value="">전체 카테고리</option>
+                <option value="church" selected="@(Model.Filter.CategoryKey == "church")">교회소식</option>
+                <option value="member" selected="@(Model.Filter.CategoryKey == "member")">교우소식</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="isPinned" class="form-select">
+                <option value="">전체</option>
+                <option value="true" selected="@(Model.Filter.IsPinned == true)">필독</option>
+                <option value="false" selected="@(Model.Filter.IsPinned == false)">일반</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="isVisible" class="form-select">
+                <option value="">전체</option>
+                <option value="true" selected="@(Model.Filter.IsVisible == true)">공개</option>
+                <option value="false" selected="@(Model.Filter.IsVisible == false)">비공개</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="sortBy" class="form-select">
+                <option value="PostedOn" selected="@(Model.Filter.SortBy == "PostedOn")">작성일</option>
+                <option value="Title" selected="@(Model.Filter.SortBy == "Title")">제목</option>
+                <option value="Views" selected="@(Model.Filter.SortBy == "Views")">조회수</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-secondary w-100">검색</button>
+        </div>
+    </form>
+</div>
+
+<!-- 소식 목록 -->
+<div class="admin-card">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>카테고리</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                    <th>조회수</th>
+                    <th>첨부</th>
+                    <th>상태</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Notices.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4">등록된 소식이 없습니다.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var notice in Model.Notices)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge @(notice.CategoryKey == "church" ? "bg-primary" : "bg-info")">
+                                    @(notice.CategoryKey == "church" ? "교회소식" : "교우소식")
+                                </span>
+                            </td>
+                            <td>
+                                <div>
+                                    @if (notice.IsPinned)
+                                    {
+                                        <i class="bi bi-pin-fill text-danger"></i>
+                                    }
+                                    @notice.Title
+                                </div>
+                            </td>
+                            <td>@notice.Author</td>
+                            <td>@notice.PostedOn.ToString("yyyy-MM-dd")</td>
+                            <td>@notice.Views</td>
+                            <td>
+                                @if (notice.AttachmentCount > 0)
+                                {
+                                    <span class="badge bg-secondary">@notice.AttachmentCount</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @(notice.IsVisible ? "bg-success" : "bg-secondary")">
+                                    @(notice.IsVisible ? "공개" : "비공개")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/Admin/Notices/Edit/@notice.Id" class="btn btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-warning" onclick="togglePinned(@notice.Id)">
+                                        <i class="bi bi-pin"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleVisibility(@notice.Id)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="deleteNotice(@notice.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 페이징 -->
+    @if (Model.Pagination.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(!Model.Pagination.HasPrevious ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.Pagination.CurrentPage - 1)">이전</a>
+                </li>
+                @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.Pagination.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="?page=@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(!Model.Pagination.HasNext ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.Pagination.CurrentPage + 1)">다음</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function toggleVisibility(id) {
+            if (!confirm('표시 여부를 변경하시겠습니까?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch(`/Admin/Notices/ToggleVisibility/${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function togglePinned(id) {
+            if (!confirm('필독 여부를 변경하시겠습니까?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch(`/Admin/Notices/TogglePinned/${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function deleteNotice(id) {
+            if (!confirm('정말 삭제하시겠습니까? 모든 첨부파일도 함께 삭제됩니다.')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch(`/Admin/Notices/Delete/${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+    </script>
+    @Html.AntiForgeryToken()
+}

@@ -1,0 +1,106 @@
+@using Microsoft.AspNetCore.Identity
+@using ChurchWeb.Core.Entities.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ChurchWeb 관리</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <!-- Admin Design System -->
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app">
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="mark">교</div>
+                <div>
+                    <h1>ChurchWeb</h1>
+                    <span>관리 시스템</span>
+                </div>
+            </div>
+
+            <nav class="nav">
+                <a href="/Admin" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                    <span class="ic">▦</span> 대시보드
+                </a>
+
+                <div class="group">콘텐츠 관리</div>
+
+                <a href="/Admin/ChurchInfo" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ChurchInfoAdmin" ? "active" : "")">
+                    <span class="ic">✎</span> 기본 관리
+                </a>
+                <a href="/Admin/Menu" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "MenuAdmin" ? "active" : "")">
+                    <span class="ic">☰</span> 메뉴 노출 관리
+                </a>
+                <a href="/Admin/Sermons" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "SermonsAdmin" ? "active" : "")">
+                    <span class="ic">▶</span> 설교 말씀
+                </a>
+                <a href="/Admin/Notices" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "NoticesAdmin" ? "active" : "")">
+                    <span class="ic">✉</span> 교회 소식
+                </a>
+                <a href="/Admin/Outreach" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "OutreachAdmin" ? "active" : "")">
+                    <span class="ic">◈</span> 온라인 전도카드
+                </a>
+
+                <div class="group">시스템</div>
+
+                <a href="/Admin/Builder" class="soon">
+                    <span class="ic">⚙</span> 무코드 빌더
+                </a>
+                <a href="/Admin/Bulletins" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "BulletinsAdmin" ? "active" : "")">
+                    <span class="ic">◐</span> 주보
+                </a>
+                <a href="/Admin/Albums" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AlbumsAdmin" ? "active" : "")">
+                    <span class="ic">▣</span> 갤러리
+                </a>
+                <a href="/Admin/Calendar" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "CalendarAdmin" ? "active" : "")">
+                    <span class="ic">◑</span> 교회일정
+                </a>
+            </nav>
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <div class="side-foot">
+                    <div class="avatar">관</div>
+                    <div>
+                        <div style="color:#efe7da;font-weight:700">@User.Identity!.Name</div>
+                        <form asp-controller="Account" asp-action="Logout" method="post" style="margin: 0; display: inline;">
+                            <button type="submit" style="background:none;border:none;color:#a99a86;font-size:11px;padding:0;cursor:pointer;">로그아웃</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </aside>
+
+        <!-- ===== MAIN ===== -->
+        <div class="main">
+            <div class="topbar">
+                <div class="crumb">관리자 · <b>@ViewData["Title"]</b></div>
+                <div class="spacer"></div>
+                <a href="/" class="btn ghost" target="_blank">사이트 미리보기 ↗</a>
+            </div>
+
+            <div class="content">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

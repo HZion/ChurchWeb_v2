@@ -1,0 +1,14 @@
+@page "/Admin/Blazor/albums"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@layout AdminLayout
+
+<div class="topbar">
+    <div class="crumb">관리자 · <b>갤러리</b></div>
+    <div class="spacer"></div>
+</div>
+
+<div class="content">
+    <AlbumManagementSection />
+</div>

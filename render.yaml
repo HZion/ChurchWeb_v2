@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: churchweb
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore
+    plan: starter
+    disk:
+      name: churchweb-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__Default
+        fromDatabase:
+          name: churchweb-db
+          property: connectionString
+      - key: UPLOADS_PATH
+        value: /var/data/uploads
+      - key: DP_KEYS_PATH
+        value: /var/data/keys
+      - key: YouTube__ApiKey
+        sync: false
+      - key: KakaoMap__ApiKey
+        sync: false
+    healthCheckPath: /
+
+databases:
+  - name: churchweb-db
+    databaseName: churchweb
+    user: churchweb_user
+    region: singapore
+    plan: starter

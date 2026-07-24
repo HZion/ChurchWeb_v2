@@ -1,0 +1,132 @@
+@model ChurchWeb.Web.Models.Worship.SermonDetailVm
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 말씀과 찬양 &nbsp;›&nbsp; <b>{(Model.Category == "sunday" ? "주일 설교" : "특별 설교")}</b>", Model.Title, Model.Verse)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs.Where(t => t.IsVisible).OrderBy(t => t.SortOrder), Model.Category)' />
+
+<main class="content sermon-detail">
+    <div class="container">
+
+        <!-- 유튜브 영상 영역 -->
+        <div class="video-section">
+            <div class="video-placeholder">
+                <div class="video-thumb" style="background-image: url('https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg')">
+                    <div class="play-icon">▶</div>
+                    <div class="video-info">유튜브 영상</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 설교 정보 -->
+        <div class="sermon-info">
+            <div class="meta">
+                <span class="cat-badge">@(Model.Category == "sunday" ? "주일 설교" : "특별 설교")</span>
+                <span class="verse">@Model.Verse</span>
+                <span class="sep">·</span>
+                <span class="preacher">@Model.Preacher</span>
+                <span class="sep">·</span>
+                <span class="date">@Model.Date</span>
+                <span class="sep">·</span>
+                <span class="duration">@Model.Duration</span>
+            </div>
+            <h1>@Model.Title</h1>
+
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="description">
+                    <h3>설교 요약</h3>
+                    <p>@Model.Description</p>
+                </div>
+            }
+
+            <!-- 첨부파일 -->
+            @if (Model.Attachments.Count > 0)
+            {
+                <div class="attachments">
+                    <h3>첨부파일</h3>
+                    <div class="file-list">
+                        @foreach (var file in Model.Attachments)
+                        {
+                            <a href="@file.FileUrl" class="file-item" download>
+                                <span class="icon">📎</span>
+                                <span class="name">@file.FileName</span>
+                                <span class="size">(@file.FileSize)</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- 태그 -->
+            @if (Model.Tags.Count > 0)
+            {
+                <div class="tags">
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <span class="tag">#@tag</span>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- 이전/다음 네비게이션 -->
+        <div class="nav-items">
+            @if (Model.Prev != null)
+            {
+                <a href="/sermons/@Model.Prev.Id" class="nav-prev">
+                    <div class="label">‹ 이전 설교</div>
+                    <div class="title">@Model.Prev.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-prev disabled"></div>
+            }
+
+            @if (Model.Next != null)
+            {
+                <a href="/sermons/@Model.Next.Id" class="nav-next">
+                    <div class="label">다음 설교 ›</div>
+                    <div class="title">@Model.Next.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-next disabled"></div>
+            }
+        </div>
+
+        <!-- 관련 설교 -->
+        @if (Model.RelatedSermons.Count > 0)
+        {
+            <div class="related-section">
+                <h3>관련 설교</h3>
+                <div class="sermon-grid">
+                    @foreach (var sermon in Model.RelatedSermons)
+                    {
+                        <a href="/sermons/@sermon.Id" class="sermon-card">
+                            <div class="thumb">
+                                <div class="thumb-img" style="background-image: url('@sermon.ThumbUrl')"></div>
+                                <div class="play-btn">▶</div>
+                                <div class="duration">@sermon.Duration</div>
+                            </div>
+                            <div class="info">
+                                <div class="cat-badge">@(sermon.Category == "sunday" ? "주일 설교" : "특별 설교")</div>
+                                <div class="verse">@sermon.Verse</div>
+                                <div class="title">@sermon.Title</div>
+                                <div class="meta">
+                                    <span class="preacher">@sermon.Preacher</span>
+                                    <span class="sep">·</span>
+                                    <span class="date">@sermon.Date</span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+    </div>
+</main>

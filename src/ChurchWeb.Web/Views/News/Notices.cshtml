@@ -1,0 +1,104 @@
+@model ChurchWeb.Web.Models.News.NoticeListVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 소식 &nbsp;›&nbsp; <b>{Model.PageTitle}</b>", Model.PageTitle, Model.PageSubtitle)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "notices")' />
+
+<main class="content">
+    <div class="container">
+
+        @if (Model.Items.Count == 0)
+        {
+            <!-- 빈 상태 -->
+            <div class="empty-state">
+                <div class="empty-icon">📢</div>
+                <h3>등록된 소식이 없습니다</h3>
+                <p>곧 업데이트될 예정입니다. 조금만 기다려주세요.</p>
+            </div>
+        }
+        else
+        {
+            <!-- 툴바 (분류 필터, 검색) -->
+            <div class="toolbar">
+                <div class="filters">
+                    @foreach (var cat in Model.Categories.Where(c => c.IsVisible).OrderBy(c => c.SortOrder))
+                    {
+                        <button class="filter-btn @(cat.Key == "all" ? "active" : "")"
+                                data-category="@cat.Key">@cat.Label</button>
+                    }
+                </div>
+                <div class="right">
+                    <div class="search">
+                        <span>🔍</span>
+                        <input type="text" placeholder="제목, 내용 검색...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 소식 리스트 -->
+            <div class="notice-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="cat">분류</th>
+                            <th class="title">제목</th>
+                            <th class="author">작성자</th>
+                            <th class="date">날짜</th>
+                            <th class="views">조회</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items.OrderByDescending(i => i.IsPinned).ThenByDescending(i => i.Id))
+                        {
+                            <tr class="notice-item @(item.IsPinned ? "pinned" : "")"
+                                data-category="@item.Category">
+                                <td class="cat">
+                                    @if (item.IsPinned)
+                                    {
+                                        <span class="badge-pin">필독</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-cat">@(item.Category == "church" ? "교회소식" : "교우소식")</span>
+                                    }
+                                </td>
+                                <td class="title">
+                                    <a href="/news/notices/@item.Id">@item.Title</a>
+                                </td>
+                                <td class="author">@item.Author</td>
+                                <td class="date">@item.Date</td>
+                                <td class="views">@item.Views</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이지네이션 -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @if (Model.Page > 1)
+                    {
+                        <a href="?page=@(Model.Page - 1)" class="page-link">‹ 이전</a>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <a href="?page=@i" class="page-link @(i == Model.Page ? "active" : "")">@i</a>
+                    }
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="?page=@(Model.Page + 1)" class="page-link">다음 ›</a>
+                    }
+                </div>
+            }
+        }
+
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/notice-filter.js"></script>
+}

@@ -1,0 +1,378 @@
+@using ChurchWeb.Core.Entities.News
+@using ChurchWeb.Infrastructure.Services
+@using Microsoft.EntityFrameworkCore
+@using ChurchWeb.Web.Components.Shared
+@inject IBulletinAdminService BulletinService
+@inject ILogger<BulletinManagementSection> Logger
+@inject IJSRuntime JS
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">주보 관리</h2>
+        <p>주보를 등록·수정하고 노출을 제어합니다.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error">
+            @errorMessage
+        </div>
+    }
+
+    <!-- 주보 목록 -->
+    <div class="card">
+        <div class="card-head">
+            <h3>주보 목록</h3>
+            <button class="btn primary" @onclick="AddNewBulletin">＋ 새 주보 추가</button>
+        </div>
+        <div class="sub">등록된 주보를 확인하고 관리합니다. 노출을 끄면 공개 페이지에서 숨겨집니다.</div>
+
+        <div class="info-strip">ⓘ PDF 파일은 최대 10MB까지 업로드 가능합니다.</div>
+
+        @if (bulletins.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width:120px">날짜</th>
+                        <th>제목</th>
+                        <th style="width:180px">파일</th>
+                        <th style="width:90px">노출</th>
+                        <th style="width:96px">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bulletin in bulletins.OrderByDescending(b => b.PublishedDate))
+                    {
+                        <tr>
+                            <td>@bulletin.PublishedDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <div class="pname">@bulletin.Title</div>
+                                @if (bulletin.FileSize > 0)
+                                {
+                                    <div class="pdept">@FormatFileSize(bulletin.FileSize)</div>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(bulletin.FileName))
+                                {
+                                    <a href="/Admin/Bulletins/Download/@bulletin.Id" class="btn ghost sm" target="_blank">
+                                        📄 보기/다운로드
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="hint">파일 없음</span>
+                                }
+                            </td>
+                            <td>
+                                <label class="toggle">
+                                    <input type="checkbox" checked="@bulletin.IsVisible" @onchange="@(e => ToggleVisibility(bulletin, (bool)e.Value!))" />
+                                    <span class="tr"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="rowacts">
+                                    <button class="icon-btn" @onclick="@(() => EditBulletin(bulletin))"><Icon Name="pencil" /></button>
+                                    <button class="icon-btn danger" @onclick="@(() => DeleteBulletin(bulletin))"><Icon Name="trash" /></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state">
+                <p>등록된 주보가 없습니다.</p>
+            </div>
+        }
+    </div>
+
+    <!-- 추가/수정 폼 -->
+    @if (editingBulletin != null)
+    {
+        <div class="card">
+            <h3>@(editingBulletin.Id == 0 ? "주보 추가" : "주보 수정")</h3>
+            <div class="sub">정보를 입력하고 저장하세요.</div>
+
+            <EditForm Model="@editingBulletin" OnValidSubmit="SaveBulletin">
+                <div class="grid g2" style="margin-bottom:14px">
+                    <div class="field">
+                        <label>발행 날짜</label>
+                        <InputDate @bind-Value="editingBulletin.PublishedDate" @onchange="OnDateChanged" />
+                    </div>
+                    <div class="field">
+                        <label>제목</label>
+                        <InputText @bind-Value="editingBulletin.Title" placeholder="예: 2026년 7월 23일 주보" />
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom:14px">
+                    <label>PDF 파일 @(editingBulletin.Id == 0 ? "" : "(선택 - 변경 시에만 업로드)")</label>
+                    <InputFile OnChange="OnFileSelected" accept=".pdf" />
+                    @if (!string.IsNullOrEmpty(existingFileName))
+                    {
+                        <div class="hint" style="margin-top:4px">현재 파일: @existingFileName (@FormatFileSize(existingFileSize))</div>
+                    }
+                    @if (uploadedFile != null)
+                    {
+                        <div class="hint" style="margin-top:4px;color:#4CAF50">✓ 새 파일 선택됨: @uploadedFile.Name (@FormatFileSize(uploadedFile.Size))</div>
+                    }
+                </div>
+
+                <div class="field" style="margin-bottom:14px">
+                    <label>
+                        <input type="checkbox" @bind="editingBulletin.IsVisible" style="margin-right:6px" />
+                        공개 페이지에 노출
+                    </label>
+                </div>
+
+                <div class="flex-end">
+                    <button type="button" class="btn ghost" @onclick="CancelEdit"><Icon Name="x" /> 취소</button>
+                    <button type="submit" class="btn primary"><Icon Name="save" /> 저장하기</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+</section>
+
+@code {
+    private List<Bulletin> bulletins = new();
+    private Bulletin? editingBulletin = null;
+    private IBrowserFile? uploadedFile = null;
+    private string existingFileName = "";
+    private long existingFileSize = 0;
+    private string successMessage = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var (result, _) = await BulletinService.GetPagedBulletinsAsync(
+                page: 1,
+                pageSize: 1000,
+                sortBy: "PublishedDate",
+                sortDescending: true
+            );
+            bulletins = result.ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading bulletins");
+            errorMessage = "주보 목록을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private void AddNewBulletin()
+    {
+        var today = DateTime.UtcNow.Date;
+        editingBulletin = new Bulletin
+        {
+            PublishedDate = today,
+            Title = GenerateTitle(today),
+            IsVisible = true,
+            SortOrder = 0
+        };
+        uploadedFile = null;
+        existingFileName = "";
+        existingFileSize = 0;
+    }
+
+    private void EditBulletin(Bulletin bulletin)
+    {
+        editingBulletin = new Bulletin
+        {
+            Id = bulletin.Id,
+            Title = bulletin.Title,
+            PublishedDate = bulletin.PublishedDate,
+            IsVisible = bulletin.IsVisible,
+            SortOrder = bulletin.SortOrder
+        };
+        uploadedFile = null;
+        existingFileName = bulletin.FileName;
+        existingFileSize = bulletin.FileSize;
+    }
+
+    private void OnDateChanged(ChangeEventArgs e)
+    {
+        if (editingBulletin != null && DateTime.TryParse(e.Value?.ToString(), out var newDate))
+        {
+            editingBulletin.Title = GenerateTitle(newDate);
+        }
+    }
+
+    private string GenerateTitle(DateTime date)
+    {
+        return $"{date.Year}년 {date.Month}월 {date.Day}일 주보";
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        uploadedFile = e.File;
+    }
+
+    private async Task SaveBulletin()
+    {
+        if (editingBulletin == null) return;
+
+        try
+        {
+            // Validation
+            if (editingBulletin.Id == 0 && uploadedFile == null)
+            {
+                errorMessage = "PDF 파일을 선택하세요.";
+                successMessage = "";
+                return;
+            }
+
+            if (uploadedFile != null)
+            {
+                // 10MB 제한
+                const long maxFileSize = 10 * 1024 * 1024;
+                if (uploadedFile.Size > maxFileSize)
+                {
+                    errorMessage = "파일 크기는 10MB 이하여야 합니다.";
+                    successMessage = "";
+                    return;
+                }
+
+                if (uploadedFile.ContentType != "application/pdf")
+                {
+                    errorMessage = "PDF 파일만 업로드 가능합니다.";
+                    successMessage = "";
+                    return;
+                }
+            }
+
+            if (editingBulletin.Id == 0)
+            {
+                // Create
+                if (uploadedFile != null)
+                {
+                    using var memoryStream = new MemoryStream();
+                    await uploadedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(memoryStream);
+                    editingBulletin.PdfData = memoryStream.ToArray();
+                    editingBulletin.FileName = uploadedFile.Name;
+                    editingBulletin.FileSize = uploadedFile.Size;
+                    editingBulletin.ContentType = uploadedFile.ContentType;
+                }
+
+                await BulletinService.CreateBulletinAsync(editingBulletin);
+                successMessage = "주보가 성공적으로 등록되었습니다.";
+                errorMessage = "";
+            }
+            else
+            {
+                // Update
+                var existing = await BulletinService.GetBulletinByIdAsync(editingBulletin.Id);
+                if (existing != null)
+                {
+                    existing.Title = editingBulletin.Title;
+                    existing.PublishedDate = editingBulletin.PublishedDate;
+                    existing.IsVisible = editingBulletin.IsVisible;
+                    existing.SortOrder = editingBulletin.SortOrder;
+
+                    // 새 파일이 업로드된 경우
+                    if (uploadedFile != null)
+                    {
+                        using var memoryStream = new MemoryStream();
+                        await uploadedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(memoryStream);
+                        existing.PdfData = memoryStream.ToArray();
+                        existing.FileName = uploadedFile.Name;
+                        existing.FileSize = uploadedFile.Size;
+                        existing.ContentType = uploadedFile.ContentType;
+                    }
+
+                    await BulletinService.UpdateBulletinAsync(existing);
+                    successMessage = "주보가 성공적으로 수정되었습니다.";
+                    errorMessage = "";
+                }
+            }
+
+            editingBulletin = null;
+            uploadedFile = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"저장 중 오류가 발생했습니다: {ex.Message}";
+            successMessage = "";
+            Logger.LogError(ex, "Error saving bulletin");
+        }
+    }
+
+    private void CancelEdit()
+    {
+        editingBulletin = null;
+        uploadedFile = null;
+        existingFileName = "";
+        existingFileSize = 0;
+    }
+
+    private async Task DeleteBulletin(Bulletin bulletin)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"{bulletin.Title}을(를) 삭제하시겠습니까?");
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await BulletinService.DeleteBulletinAsync(bulletin.Id);
+            if (result)
+            {
+                successMessage = "주보가 삭제되었습니다.";
+                errorMessage = "";
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "주보를 찾을 수 없습니다.";
+                successMessage = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"삭제 중 오류가 발생했습니다: {ex.Message}";
+            successMessage = "";
+            Logger.LogError(ex, "Error deleting bulletin");
+        }
+    }
+
+    private async Task ToggleVisibility(Bulletin bulletin, bool isVisible)
+    {
+        try
+        {
+            bulletin.IsVisible = isVisible;
+            await BulletinService.UpdateBulletinAsync(bulletin);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling visibility");
+            errorMessage = "노출 설정 변경 중 오류가 발생했습니다.";
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024)
+            return $"{bytes} B";
+        else if (bytes < 1024 * 1024)
+            return $"{bytes / 1024.0:F1} KB";
+        else
+            return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+}

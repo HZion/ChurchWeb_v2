@@ -1,0 +1,1120 @@
+@using ChurchWeb.Core.Entities
+@using ChurchWeb.Core.Entities.Home
+@using ChurchWeb.Infrastructure.Data
+@using ChurchWeb.Web.Models.Admin
+@using Microsoft.EntityFrameworkCore
+@inject IChurchInfoService ChurchInfoService
+@inject AppDbContext DbContext
+@inject ILogger<BasicManagementSection> Logger
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">홈화면 관리</h2>
+        <p>메인 화면의 표어·실천사항·홍보 영상을 코드 수정 없이 변경합니다.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null">×</button>
+        </div>
+    }
+
+    <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="split">
+            <div class="card" style="flex:1;min-width:420px">
+                <h3>비전 섹션 · 올해의 표어</h3>
+                <div class="sub">1년마다 바뀌는 표어와 생활 실천 내용을 입력하세요. 메인 화면에 명조체로 강조 표시됩니다.</div>
+
+                <div class="field">
+                    <label>연도</label>
+                    <InputText @bind-value="model.Year" type="text" placeholder="2026년" />
+                    <ValidationMessage For="@(() => model.Year)" class="text-danger" />
+                </div>
+
+                <div class="field">
+                    <label>올해의 표어</label>
+                    <InputText @bind-value="model.VisionMotto" type="text" placeholder="말씀 위에 굳게 서는 교회" @oninput="UpdatePreview" />
+                    <ValidationMessage For="@(() => model.VisionMotto)" class="text-danger" />
+                </div>
+
+                <div class="field">
+                    <label>생활 실천 내용 <span class="hint">줄바꿈으로 항목 구분</span></label>
+                    <InputTextArea @bind-value="model.Practices" rows="5" placeholder="1. 날마다 말씀을 묵상합니다&#10;2. 이웃을 내 몸과 같이 섬깁니다&#10;3. 기쁨으로 예배에 참여합니다" @oninput="UpdatePreview" />
+                    <ValidationMessage For="@(() => model.Practices)" class="text-danger" />
+                </div>
+
+                <div class="field">
+                    <label>메인 홍보 영상 (유튜브 URL)</label>
+                    <InputText @bind-value="model.PromoVideoUrl" type="url" placeholder="https://youtu.be/xxxxxxxxxxx" />
+                    <ValidationMessage For="@(() => model.PromoVideoUrl)" class="text-danger" />
+                </div>
+
+                <div class="flex-end">
+                    <button type="button" class="btn ghost" @onclick="@(async () => await LoadData())">되돌리기</button>
+                    <button type="submit" class="btn primary">저장하기</button>
+                </div>
+            </div>
+
+            <div class="card" style="width:340px">
+                <h3>미리보기</h3>
+                <div class="sub">메인 비전 섹션 표시 예시</div>
+                <div style="background:var(--charcoal);border-radius:12px;padding:28px 22px;text-align:center">
+                    <div style="color:var(--gold-soft);font-size:12px;letter-spacing:.2em" id="preview-year">@model.Year VISION</div>
+                    <div class="serif" style="color:#fff;font-size:20px;margin:12px 0;line-height:1.4" id="preview-motto">
+                        @if (!string.IsNullOrEmpty(model.VisionMotto))
+                        {
+                            @foreach (var line in model.VisionMotto.Split('\n'))
+                            {
+                                @line<br />
+                            }
+                        }
+                        else
+                        {
+                            <text>말씀 위에 굳게<br>서는 교회</text>
+                        }
+                    </div>
+                    <div style="height:1px;background:rgba(212,185,150,.35);margin:16px 0"></div>
+                    <div style="color:#cabfa9;font-size:12px;line-height:1.9;text-align:left" id="preview-practices">
+                        @if (!string.IsNullOrEmpty(model.Practices))
+                        {
+                            @foreach (var line in model.Practices.Split('\n').Where(l => !string.IsNullOrWhiteSpace(l)))
+                            {
+                                @line<br />
+                            }
+                        }
+                        else
+                        {
+                            <text>1. 날마다 말씀을 묵상합니다<br>
+                            2. 이웃을 내 몸과 같이 섬깁니다<br>
+                            3. 기쁨으로 예배에 참여합니다</text>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 추가 교회 정보 섹션 -->
+        <div class="card mt">
+            <h3>추가 교회 정보</h3>
+            <div class="sub">기본 정보, 연락처, 예배 시간 등을 관리합니다.</div>
+
+            <div class="grid g2">
+                <div class="field">
+                    <label>교회명</label>
+                    <InputText @bind-value="model.ChurchName" type="text" />
+                    <ValidationMessage For="@(() => model.ChurchName)" class="text-danger" />
+                </div>
+
+                <div class="field">
+                    <label>교단</label>
+                    <InputText @bind-value="model.Denomination" type="text" placeholder="예: 대한예수교장로회(합동)" />
+                </div>
+
+                <div class="field">
+                    <label>주소</label>
+                    <InputText @bind-value="model.Address" type="text" />
+                    <ValidationMessage For="@(() => model.Address)" class="text-danger" />
+                </div>
+
+                <div class="field">
+                    <label>전화번호</label>
+                    <InputText @bind-value="model.Phone" type="text" placeholder="02-1234-5678" />
+                </div>
+
+                <div class="field">
+                    <label>이메일</label>
+                    <InputText @bind-value="model.Email" type="email" />
+                </div>
+
+                <div class="field">
+                    <label>유튜브 채널</label>
+                    <InputText @bind-value="model.YoutubeUrl" type="url" placeholder="https://youtube.com" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label>온라인 헌금 계좌</label>
+                <InputText @bind-value="model.OnlineOfferingAccount" type="text" placeholder="○○은행 000-00-00000 (○○교회)" />
+            </div>
+
+            <div class="field">
+                <label>예배 시간</label>
+                <InputText @bind-value="model.WorshipTimesJson" type="text" placeholder="주일 1부 09:00 · 2부 11:00 · 수요 19:30" />
+                <small class="text-muted">예배 시간을 간단한 텍스트로 입력하세요</small>
+            </div>
+
+            <div class="grid g2">
+                <div class="field">
+                    <label>위도 (Latitude)</label>
+                    <InputNumber @bind-Value="model.Latitude" step="any" placeholder="37.566535" />
+                    <small class="text-muted">지도에 표시할 위도 좌표</small>
+                </div>
+
+                <div class="field">
+                    <label>경도 (Longitude)</label>
+                    <InputNumber @bind-Value="model.Longitude" step="any" placeholder="126.977969" />
+                    <small class="text-muted">지도에 표시할 경도 좌표</small>
+                </div>
+            </div>
+
+            <div class="flex-end">
+                <button type="submit" class="btn primary">저장하기</button>
+            </div>
+        </div>
+
+        <!-- 담임목사 인사말 섹션 -->
+        <div class="card mt">
+            <h3>담임목사 인사말</h3>
+            <div class="sub">담임목사의 인사말과 소개 내용을 관리합니다.</div>
+
+            <div class="grid g2">
+                <div class="field">
+                    <label>목사 직함</label>
+                    <InputText @bind-value="model.PastorRole" type="text" placeholder="담임 목사" />
+                </div>
+
+                <div class="field">
+                    <label>목사 이름</label>
+                    <InputText @bind-value="model.PastorName" type="text" placeholder="홍길동" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label>인사말 제목</label>
+                <InputText @bind-value="model.PastorTitle" type="text" placeholder="함께 걷는 믿음의 여정" />
+            </div>
+
+            <div class="field">
+                <label>인사말 내용</label>
+                <InputTextArea @bind-value="model.PastorMessage" rows="6" placeholder="환영합니다. 우리 교회는..." />
+            </div>
+
+            <div class="field">
+                <label>목사 사진</label>
+                <ImageUploader @bind-ImageUrl="model.PastorPhotoUrl" />
+            </div>
+
+            <div class="field">
+                <label>인사말 더보기 URL</label>
+                <InputText @bind-value="model.PastorMoreUrl" type="url" placeholder="/about/pastor" />
+            </div>
+
+            <div class="flex-end">
+                <button type="submit" class="btn primary">저장하기</button>
+            </div>
+        </div>
+    </EditForm>
+
+    <!-- 히어로 슬라이드 관리 섹션 -->
+    <div class="card mt">
+        <h3>히어로 슬라이드 관리</h3>
+        <div class="sub">메인 화면 상단의 히어로 슬라이드를 관리합니다.</div>
+
+        @if (heroSlides == null)
+        {
+            <p>로딩 중...</p>
+        }
+        else if (heroSlides.Count == 0)
+        {
+            <div class="info-strip">
+                <span class="ic">ℹ</span>
+                <div>등록된 히어로 슬라이드가 없습니다. 새 슬라이드를 추가하세요.</div>
+            </div>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px">순서</th>
+                        <th>제목</th>
+                        <th style="width:120px">배경타입</th>
+                        <th style="width:100px">표시</th>
+                        <th style="width:140px">작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slide in heroSlides.OrderBy(s => s.SortOrder))
+                    {
+                        <tr>
+                            <td>@slide.SortOrder</td>
+                            <td>
+                                <strong>@slide.Title</strong>
+                                @if (!string.IsNullOrEmpty(slide.Subtitle))
+                                {
+                                    <br /><small class="text-muted">@slide.Subtitle</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge">@slide.BackgroundType</span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn @(slide.IsVisible ? "success" : "ghost") sm"
+                                        @onclick="@(async () => await ToggleSlideVisibility(slide.Id))">
+                                    @(slide.IsVisible ? "표시" : "숨김")
+                                </button>
+                            </td>
+                            <td>
+                                <button type="button" class="btn ghost sm" @onclick="@(() => EditSlide(slide.Id))">편집</button>
+                                <button type="button" class="btn ghost sm" @onclick="@(async () => await DeleteSlide(slide.Id))">삭제</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <div class="flex-end mt">
+            <button type="button" class="btn primary" @onclick="AddNewSlide">+ 새 슬라이드 추가</button>
+        </div>
+
+        @if (editingSlideId != null)
+        {
+            <div class="modal-overlay" @onclick="CancelEditSlide">
+                <div class="modal-content" @onclick:stopPropagation="true">
+                    <div class="modal-header">
+                        <h3>@(editingSlideId == 0 ? "새 슬라이드 추가" : "슬라이드 편집")</h3>
+                        <button type="button" class="btn-close" @onclick="CancelEditSlide">×</button>
+                    </div>
+
+                    <EditForm Model="@editingSlide" OnValidSubmit="SaveSlide">
+                        <DataAnnotationsValidator />
+
+                        <div class="modal-body">
+                            <div class="field">
+                                <label>순서</label>
+                                <InputNumber @bind-Value="editingSlide!.SortOrder" />
+                            </div>
+
+                            <div class="field">
+                                <label>배경 타입</label>
+                                <InputSelect @bind-Value="editingSlide!.BackgroundType">
+                                    <option value="gradient">그라데이션</option>
+                                    <option value="image">이미지</option>
+                                    <option value="color">단색</option>
+                                </InputSelect>
+                            </div>
+
+                            @if (editingSlide!.BackgroundType == "image")
+                            {
+                                <div class="field">
+                                    <label>배경 이미지</label>
+                                    <ImageUploader @bind-ImageUrl="editingSlide.ImageUrl" />
+                                </div>
+                                <div class="field">
+                                    <label>오버레이 투명도 (0~1)</label>
+                                    <InputNumber @bind-Value="editingSlide.OverlayOpacity" step="0.1" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="field">
+                                    <label>배경 CSS</label>
+                                    <InputText @bind-Value="editingSlide.Background" placeholder="linear-gradient(...) 또는 #색상코드" />
+                                </div>
+                            }
+
+                            <div class="field">
+                                <label>Kicker (상단 작은 텍스트)</label>
+                                <InputText @bind-Value="editingSlide.Kicker" placeholder="WELCOME" />
+                            </div>
+
+                            <div class="field">
+                                <label>제목</label>
+                                <InputText @bind-Value="editingSlide.Title" placeholder="환영합니다" />
+                            </div>
+
+                            <div class="field">
+                                <label>부제</label>
+                                <InputTextArea @bind-Value="editingSlide.Subtitle" rows="2" placeholder="함께 예배하고 성장하는 교회" />
+                            </div>
+
+                            <div class="grid g2">
+                                <div class="field">
+                                    <label>주 버튼 텍스트</label>
+                                    <InputText @bind-Value="editingSlide.PrimaryBtnText" placeholder="예배 안내" />
+                                </div>
+                                <div class="field">
+                                    <label>주 버튼 URL</label>
+                                    <InputText @bind-Value="editingSlide.PrimaryBtnUrl" placeholder="/worship" />
+                                </div>
+                            </div>
+
+                            <div class="grid g2">
+                                <div class="field">
+                                    <label>보조 버튼 텍스트</label>
+                                    <InputText @bind-Value="editingSlide.SecondaryBtnText" placeholder="교회 소개" />
+                                </div>
+                                <div class="field">
+                                    <label>보조 버튼 URL</label>
+                                    <InputText @bind-Value="editingSlide.SecondaryBtnUrl" placeholder="/about" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn ghost" @onclick="CancelEditSlide">취소</button>
+                            <button type="submit" class="btn primary">저장</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- 홈 섹션 On/Off 관리 -->
+    <div class="card mt">
+        <h3>홈 섹션 표시 관리</h3>
+        <div class="sub">메인 화면에 표시되는 섹션을 켜거나 끌 수 있습니다.</div>
+
+        @if (homeSections == null)
+        {
+            <p>로딩 중...</p>
+        }
+        else if (homeSections.Count == 0)
+        {
+            <div class="info-strip">
+                <span class="ic">ℹ</span>
+                <div>등록된 섹션이 없습니다.</div>
+            </div>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:60px">순서</th>
+                        <th style="width:150px">섹션 ID</th>
+                        <th>섹션 이름</th>
+                        <th style="width:120px">표시</th>
+                        <th style="width:100px">작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var section in homeSections.OrderBy(s => s.SortOrder))
+                    {
+                        <tr>
+                            <td>
+                                <input type="number" @bind="section.SortOrder"
+                                       @bind:event="oninput"
+                                       @onchange="@(async () => await SaveHomeSectionOrder(section.Id, section.SortOrder))"
+                                       style="width:60px;padding:4px;border:1px solid var(--line);border-radius:6px;font-size:13px" />
+                            </td>
+                            <td><code style="font-size:12px;color:var(--muted)">@section.Key</code></td>
+                            <td><strong>@section.Title</strong></td>
+                            <td>
+                                <button type="button" class="btn @(section.IsVisible ? "success" : "ghost") sm"
+                                        @onclick="@(async () => await ToggleHomeSectionVisibility(section.Id))">
+                                    @(section.IsVisible ? "표시" : "숨김")
+                                </button>
+                            </td>
+                            <td>
+                                <button type="button" class="btn ghost sm" @onclick="@(() => EditHomeSection(section.Id))">편집</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (editingHomeSectionId != null)
+        {
+            <div class="modal-overlay" @onclick="CancelEditHomeSection">
+                <div class="modal-content" @onclick:stopPropagation="true" style="max-width:480px">
+                    <div class="modal-header">
+                        <h3>섹션 편집</h3>
+                        <button type="button" class="btn-close" @onclick="CancelEditHomeSection">×</button>
+                    </div>
+
+                    <EditForm Model="@editingHomeSection" OnValidSubmit="SaveHomeSection">
+                        <div class="modal-body">
+                            <div class="field">
+                                <label>섹션 ID</label>
+                                <InputText @bind-Value="editingHomeSection!.Key" disabled />
+                                <small class="text-muted">섹션 ID는 변경할 수 없습니다.</small>
+                            </div>
+
+                            <div class="field">
+                                <label>섹션 이름</label>
+                                <InputText @bind-Value="editingHomeSection!.Title" placeholder="섹션 표시 이름" />
+                            </div>
+
+                            <div class="field">
+                                <label>순서</label>
+                                <InputNumber @bind-Value="editingHomeSection!.SortOrder" />
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn ghost" @onclick="CancelEditHomeSection">취소</button>
+                            <button type="submit" class="btn primary">저장</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- 바로가기 버튼 관리 -->
+    <div class="card mt">
+        <h3>바로가기 버튼 관리</h3>
+        <div class="sub">메인 화면의 바로가기 버튼을 관리합니다.</div>
+
+        @if (quickLinks == null)
+        {
+            <p>로딩 중...</p>
+        }
+        else if (quickLinks.Count == 0)
+        {
+            <div class="info-strip">
+                <span class="ic">ℹ</span>
+                <div>등록된 바로가기 버튼이 없습니다. 새 버튼을 추가하세요.</div>
+            </div>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px">순서</th>
+                        <th style="width:60px">아이콘</th>
+                        <th>제목</th>
+                        <th>URL</th>
+                        <th style="width:100px">표시</th>
+                        <th style="width:140px">작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var link in quickLinks.OrderBy(q => q.SortOrder))
+                    {
+                        <tr>
+                            <td>@link.SortOrder</td>
+                            <td style="font-size:24px;text-align:center">@link.Icon</td>
+                            <td><strong>@link.Title</strong></td>
+                            <td><code style="font-size:12px;color:var(--muted)">@link.Url</code></td>
+                            <td>
+                                <button type="button" class="btn @(link.IsVisible ? "success" : "ghost") sm"
+                                        @onclick="@(async () => await ToggleQuickLinkVisibility(link.Id))">
+                                    @(link.IsVisible ? "표시" : "숨김")
+                                </button>
+                            </td>
+                            <td>
+                                <button type="button" class="btn ghost sm" @onclick="@(() => EditQuickLink(link.Id))">편집</button>
+                                <button type="button" class="btn ghost sm" @onclick="@(async () => await DeleteQuickLink(link.Id))">삭제</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <div class="flex-end mt">
+            <button type="button" class="btn primary" @onclick="AddNewQuickLink">+ 새 바로가기 추가</button>
+        </div>
+
+        @if (editingQuickLinkId != null)
+        {
+            <div class="modal-overlay" @onclick="CancelEditQuickLink">
+                <div class="modal-content" @onclick:stopPropagation="true" style="max-width:500px">
+                    <div class="modal-header">
+                        <h3>@(editingQuickLinkId == 0 ? "새 바로가기 추가" : "바로가기 편집")</h3>
+                        <button type="button" class="btn-close" @onclick="CancelEditQuickLink">×</button>
+                    </div>
+
+                    <EditForm Model="@editingQuickLink" OnValidSubmit="SaveQuickLink">
+                        <div class="modal-body">
+                            <div class="field">
+                                <label>제목</label>
+                                <InputText @bind-Value="editingQuickLink!.Title" placeholder="예배 안내" />
+                            </div>
+
+                            <div class="field">
+                                <label>아이콘 (이모지)</label>
+                                <InputText @bind-Value="editingQuickLink!.Icon" placeholder="📖" maxlength="4" />
+                                <small class="text-muted">이모지를 입력하세요 (예: 📖, 🎵, ✝️)</small>
+                            </div>
+
+                            <div class="field">
+                                <label>URL</label>
+                                <InputText @bind-Value="editingQuickLink!.Url" type="url" placeholder="/worship" />
+                            </div>
+
+                            <div class="field">
+                                <label>설명 (선택사항)</label>
+                                <InputTextArea @bind-Value="editingQuickLink!.Description" rows="2" placeholder="예배 시간과 장소 안내" />
+                            </div>
+
+                            <div class="field">
+                                <label>순서</label>
+                                <InputNumber @bind-Value="editingQuickLink!.SortOrder" />
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn ghost" @onclick="CancelEditQuickLink">취소</button>
+                            <button type="submit" class="btn primary">저장</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private ChurchInfoViewModel model = new ChurchInfoViewModel();
+    private string? successMessage;
+    private List<HeroSlide>? heroSlides;
+    private int? editingSlideId;
+    private HeroSlide? editingSlide;
+    private List<HomeSection>? homeSections;
+    private int? editingHomeSectionId;
+    private HomeSection? editingHomeSection;
+    private List<QuickLink>? quickLinks;
+    private int? editingQuickLinkId;
+    private QuickLink? editingQuickLink;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await LoadHeroSlides();
+        await LoadHomeSections();
+        await LoadQuickLinks();
+    }
+
+    private async Task LoadHeroSlides()
+    {
+        heroSlides = await DbContext.HeroSlides
+            .OrderBy(s => s.SortOrder)
+            .ToListAsync();
+    }
+
+    private async Task LoadHomeSections()
+    {
+        homeSections = await DbContext.HomeSections
+            .OrderBy(s => s.SortOrder)
+            .ToListAsync();
+    }
+
+    private async Task LoadQuickLinks()
+    {
+        quickLinks = await DbContext.QuickLinks
+            .OrderBy(q => q.SortOrder)
+            .ToListAsync();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var churchInfo = await ChurchInfoService.GetChurchInfoAsync();
+            var vision = await DbContext.Visions
+                .Include(v => v.Practices)
+                .Where(v => v.IsVisible)
+                .FirstOrDefaultAsync();
+
+            if (churchInfo == null)
+            {
+                model = new ChurchInfoViewModel();
+            }
+            else
+            {
+                model = new ChurchInfoViewModel
+                {
+                    Id = churchInfo.Id,
+                    ChurchName = churchInfo.ChurchName,
+                    Denomination = churchInfo.Denomination,
+                    Address = churchInfo.Address,
+                    Phone = churchInfo.Phone,
+                    Email = churchInfo.Email,
+                    YoutubeUrl = churchInfo.YoutubeUrl,
+                    OnlineOfferingAccount = churchInfo.OnlineOfferingAccount,
+                    WorshipTimesJson = churchInfo.WorshipTimesJson,
+                    PromoVideoUrl = churchInfo.PromoVideoUrl,
+                    Latitude = churchInfo.Latitude,
+                    Longitude = churchInfo.Longitude
+                };
+            }
+
+            if (vision != null)
+            {
+                model.Year = vision.Year;
+                model.VisionMotto = vision.MottoText;
+                model.VisionScripture = vision.ScriptureRef;
+
+                if (vision.Practices != null && vision.Practices.Any())
+                {
+                    model.Practices = string.Join(Environment.NewLine,
+                        vision.Practices.OrderBy(p => p.SortOrder).Select(p => p.Text));
+                }
+            }
+
+            // Load Pastor Greeting
+            var pastor = await DbContext.PastorGreetings
+                .Where(p => p.IsVisible)
+                .FirstOrDefaultAsync();
+
+            if (pastor != null)
+            {
+                model.PastorRole = pastor.Role;
+                model.PastorName = pastor.Name;
+                model.PastorTitle = pastor.Title;
+                model.PastorMessage = pastor.Message;
+                model.PastorPhotoUrl = pastor.PhotoUrl;
+                model.PastorMoreUrl = pastor.MoreUrl;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading church info");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            // Save ChurchInfo
+            var churchInfo = new ChurchInfo
+            {
+                Id = model.Id,
+                ChurchName = model.ChurchName,
+                Denomination = model.Denomination,
+                Address = model.Address,
+                Phone = model.Phone,
+                Email = model.Email,
+                YoutubeUrl = model.YoutubeUrl,
+                OnlineOfferingAccount = model.OnlineOfferingAccount,
+                WorshipTimesJson = model.WorshipTimesJson,
+                PromoVideoUrl = model.PromoVideoUrl,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude
+            };
+
+            await ChurchInfoService.SaveChurchInfoAsync(churchInfo);
+
+            // Save Vision
+            await SaveVisionAsync();
+
+            // Save Pastor Greeting
+            await SavePastorAsync();
+
+            successMessage = "교회 정보가 성공적으로 저장되었습니다.";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving church info");
+            successMessage = "저장 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task SaveVisionAsync()
+    {
+        var vision = await DbContext.Visions
+            .Include(v => v.Practices)
+            .FirstOrDefaultAsync();
+
+        if (vision == null)
+        {
+            vision = new Vision
+            {
+                Year = model.Year,
+                MottoText = model.VisionMotto,
+                ScriptureRef = model.VisionScripture,
+                IsVisible = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            DbContext.Visions.Add(vision);
+            await DbContext.SaveChangesAsync();
+        }
+        else
+        {
+            vision.Year = model.Year;
+            vision.MottoText = model.VisionMotto;
+            vision.ScriptureRef = model.VisionScripture;
+            vision.UpdatedAt = DateTime.UtcNow;
+        }
+
+        // Delete old practices
+        if (vision.Practices != null && vision.Practices.Any())
+        {
+            DbContext.VisionPractices.RemoveRange(vision.Practices);
+        }
+
+        // Add new practices
+        if (!string.IsNullOrWhiteSpace(model.Practices))
+        {
+            var lines = model.Practices
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var practice = new VisionPractice
+                {
+                    VisionId = vision.Id,
+                    Number = $"{i + 1:D2}",
+                    Text = lines[i],
+                    SortOrder = i + 1
+                };
+                DbContext.VisionPractices.Add(practice);
+            }
+        }
+
+        await DbContext.SaveChangesAsync();
+    }
+
+    private async Task SavePastorAsync()
+    {
+        var pastor = await DbContext.PastorGreetings
+            .FirstOrDefaultAsync();
+
+        if (pastor == null)
+        {
+            pastor = new PastorGreeting
+            {
+                Role = model.PastorRole,
+                Name = model.PastorName,
+                Title = model.PastorTitle,
+                Message = model.PastorMessage,
+                PhotoUrl = model.PastorPhotoUrl,
+                MoreUrl = model.PastorMoreUrl,
+                IsVisible = true
+            };
+            DbContext.PastorGreetings.Add(pastor);
+        }
+        else
+        {
+            pastor.Role = model.PastorRole;
+            pastor.Name = model.PastorName;
+            pastor.Title = model.PastorTitle;
+            pastor.Message = model.PastorMessage;
+            pastor.PhotoUrl = model.PastorPhotoUrl;
+            pastor.MoreUrl = model.PastorMoreUrl;
+        }
+
+        await DbContext.SaveChangesAsync();
+    }
+
+    private void UpdatePreview()
+    {
+        StateHasChanged();
+    }
+
+    // Hero Slide Management
+    private void AddNewSlide()
+    {
+        var maxOrder = heroSlides?.Any() == true ? heroSlides.Max(s => s.SortOrder) : 0;
+        editingSlideId = 0;
+        editingSlide = new HeroSlide
+        {
+            SortOrder = maxOrder + 1,
+            BackgroundType = "gradient",
+            IsVisible = true,
+            OverlayOpacity = 0.5
+        };
+    }
+
+    private void EditSlide(int id)
+    {
+        var slide = heroSlides?.FirstOrDefault(s => s.Id == id);
+        if (slide != null)
+        {
+            editingSlideId = id;
+            editingSlide = new HeroSlide
+            {
+                Id = slide.Id,
+                BackgroundType = slide.BackgroundType,
+                ImageUrl = slide.ImageUrl,
+                Background = slide.Background,
+                OverlayOpacity = slide.OverlayOpacity,
+                Kicker = slide.Kicker,
+                Title = slide.Title,
+                Subtitle = slide.Subtitle,
+                PrimaryBtnText = slide.PrimaryBtnText,
+                PrimaryBtnUrl = slide.PrimaryBtnUrl,
+                SecondaryBtnText = slide.SecondaryBtnText,
+                SecondaryBtnUrl = slide.SecondaryBtnUrl,
+                IsVisible = slide.IsVisible,
+                SortOrder = slide.SortOrder
+            };
+        }
+    }
+
+    private async Task SaveSlide()
+    {
+        if (editingSlide == null) return;
+
+        try
+        {
+            if (editingSlideId == 0)
+            {
+                // Add new slide
+                editingSlide.CreatedAt = DateTime.UtcNow;
+                editingSlide.UpdatedAt = DateTime.UtcNow;
+                DbContext.HeroSlides.Add(editingSlide);
+            }
+            else
+            {
+                // Update existing slide
+                var slide = await DbContext.HeroSlides.FindAsync(editingSlideId);
+                if (slide != null)
+                {
+                    slide.BackgroundType = editingSlide.BackgroundType;
+                    slide.ImageUrl = editingSlide.ImageUrl;
+                    slide.Background = editingSlide.Background;
+                    slide.OverlayOpacity = editingSlide.OverlayOpacity;
+                    slide.Kicker = editingSlide.Kicker;
+                    slide.Title = editingSlide.Title;
+                    slide.Subtitle = editingSlide.Subtitle;
+                    slide.PrimaryBtnText = editingSlide.PrimaryBtnText;
+                    slide.PrimaryBtnUrl = editingSlide.PrimaryBtnUrl;
+                    slide.SecondaryBtnText = editingSlide.SecondaryBtnText;
+                    slide.SecondaryBtnUrl = editingSlide.SecondaryBtnUrl;
+                    slide.IsVisible = editingSlide.IsVisible;
+                    slide.SortOrder = editingSlide.SortOrder;
+                    slide.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
+            await DbContext.SaveChangesAsync();
+            await LoadHeroSlides();
+
+            editingSlideId = null;
+            editingSlide = null;
+            successMessage = "슬라이드가 저장되었습니다.";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving hero slide");
+            successMessage = "슬라이드 저장 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task DeleteSlide(int id)
+    {
+        var slide = await DbContext.HeroSlides.FindAsync(id);
+        if (slide != null)
+        {
+            DbContext.HeroSlides.Remove(slide);
+            await DbContext.SaveChangesAsync();
+            await LoadHeroSlides();
+            successMessage = "슬라이드가 삭제되었습니다.";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleSlideVisibility(int id)
+    {
+        var slide = await DbContext.HeroSlides.FindAsync(id);
+        if (slide != null)
+        {
+            slide.IsVisible = !slide.IsVisible;
+            slide.UpdatedAt = DateTime.UtcNow;
+            await DbContext.SaveChangesAsync();
+            await LoadHeroSlides();
+            StateHasChanged();
+        }
+    }
+
+    private void CancelEditSlide()
+    {
+        editingSlideId = null;
+        editingSlide = null;
+    }
+
+    // Home Section Management
+    private async Task ToggleHomeSectionVisibility(int id)
+    {
+        var section = await DbContext.HomeSections.FindAsync(id);
+        if (section != null)
+        {
+            section.IsVisible = !section.IsVisible;
+            section.UpdatedAt = DateTime.UtcNow;
+            await DbContext.SaveChangesAsync();
+            await LoadHomeSections();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveHomeSectionOrder(int id, int newOrder)
+    {
+        var section = await DbContext.HomeSections.FindAsync(id);
+        if (section != null)
+        {
+            section.SortOrder = newOrder;
+            section.UpdatedAt = DateTime.UtcNow;
+            await DbContext.SaveChangesAsync();
+            await LoadHomeSections();
+            StateHasChanged();
+        }
+    }
+
+    private void EditHomeSection(int id)
+    {
+        var section = homeSections?.FirstOrDefault(s => s.Id == id);
+        if (section != null)
+        {
+            editingHomeSectionId = id;
+            editingHomeSection = new HomeSection
+            {
+                Id = section.Id,
+                Key = section.Key,
+                Title = section.Title,
+                IsVisible = section.IsVisible,
+                SortOrder = section.SortOrder
+            };
+        }
+    }
+
+    private async Task SaveHomeSection()
+    {
+        if (editingHomeSection == null) return;
+
+        try
+        {
+            var section = await DbContext.HomeSections.FindAsync(editingHomeSectionId);
+            if (section != null)
+            {
+                section.Title = editingHomeSection.Title;
+                section.SortOrder = editingHomeSection.SortOrder;
+                section.UpdatedAt = DateTime.UtcNow;
+
+                await DbContext.SaveChangesAsync();
+                await LoadHomeSections();
+
+                editingHomeSectionId = null;
+                editingHomeSection = null;
+                successMessage = "섹션이 저장되었습니다.";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving home section");
+            successMessage = "섹션 저장 중 오류가 발생했습니다.";
+        }
+    }
+
+    private void CancelEditHomeSection()
+    {
+        editingHomeSectionId = null;
+        editingHomeSection = null;
+    }
+
+    // QuickLink Management
+    private void AddNewQuickLink()
+    {
+        var maxOrder = quickLinks?.Any() == true ? quickLinks.Max(q => q.SortOrder) : 0;
+        editingQuickLinkId = 0;
+        editingQuickLink = new QuickLink
+        {
+            SortOrder = maxOrder + 1,
+            IsVisible = true
+        };
+    }
+
+    private void EditQuickLink(int id)
+    {
+        var link = quickLinks?.FirstOrDefault(q => q.Id == id);
+        if (link != null)
+        {
+            editingQuickLinkId = id;
+            editingQuickLink = new QuickLink
+            {
+                Id = link.Id,
+                Title = link.Title,
+                Icon = link.Icon,
+                Url = link.Url,
+                Description = link.Description,
+                IsVisible = link.IsVisible,
+                SortOrder = link.SortOrder
+            };
+        }
+    }
+
+    private async Task SaveQuickLink()
+    {
+        if (editingQuickLink == null) return;
+
+        try
+        {
+            if (editingQuickLinkId == 0)
+            {
+                // Add new link
+                editingQuickLink.CreatedAt = DateTime.UtcNow;
+                editingQuickLink.UpdatedAt = DateTime.UtcNow;
+                DbContext.QuickLinks.Add(editingQuickLink);
+            }
+            else
+            {
+                // Update existing link
+                var link = await DbContext.QuickLinks.FindAsync(editingQuickLinkId);
+                if (link != null)
+                {
+                    link.Title = editingQuickLink.Title;
+                    link.Icon = editingQuickLink.Icon;
+                    link.Url = editingQuickLink.Url;
+                    link.Description = editingQuickLink.Description;
+                    link.IsVisible = editingQuickLink.IsVisible;
+                    link.SortOrder = editingQuickLink.SortOrder;
+                    link.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
+            await DbContext.SaveChangesAsync();
+            await LoadQuickLinks();
+
+            editingQuickLinkId = null;
+            editingQuickLink = null;
+            successMessage = "바로가기가 저장되었습니다.";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving quick link");
+            successMessage = "바로가기 저장 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task DeleteQuickLink(int id)
+    {
+        var link = await DbContext.QuickLinks.FindAsync(id);
+        if (link != null)
+        {
+            DbContext.QuickLinks.Remove(link);
+            await DbContext.SaveChangesAsync();
+            await LoadQuickLinks();
+            successMessage = "바로가기가 삭제되었습니다.";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleQuickLinkVisibility(int id)
+    {
+        var link = await DbContext.QuickLinks.FindAsync(id);
+        if (link != null)
+        {
+            link.IsVisible = !link.IsVisible;
+            link.UpdatedAt = DateTime.UtcNow;
+            await DbContext.SaveChangesAsync();
+            await LoadQuickLinks();
+            StateHasChanged();
+        }
+    }
+
+    private void CancelEditQuickLink()
+    {
+        editingQuickLinkId = null;
+        editingQuickLink = null;
+    }
+}

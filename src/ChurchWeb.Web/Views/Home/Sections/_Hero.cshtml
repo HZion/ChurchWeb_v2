@@ -1,0 +1,60 @@
+@model ChurchWeb.Web.Models.Home.HeroVm
+
+@{
+    var visibleSlides = Model.Slides
+        .Where(s => s.IsVisible)
+        .OrderBy(s => s.SortOrder)
+        .ToList();
+}
+
+<section class="hero" id="top">
+    <div class="slides" id="heroSlides">
+        @foreach (var (slide, index) in visibleSlides.Select((s, i) => (s, i)))
+        {
+            var slideClass = $"slide s{index + 1}" + (index == 0 ? " active" : "");
+            var styleAttr = "";
+
+            if (slide.BackgroundType == "image")
+            {
+                var overlayGradient = $"linear-gradient(180deg, var(--hero-o1), var(--hero-o2))";
+                styleAttr = $"background: {overlayGradient}, url('{slide.ImageUrl}'); background-size: cover; background-position: center;";
+            }
+            else if (slide.BackgroundType == "gradient" || slide.BackgroundType == "color")
+            {
+                styleAttr = $"background: {slide.Background};";
+            }
+
+            <div class="@slideClass" style="@styleAttr">
+                <div class="container inner">
+                    <div class="kicker">@slide.Kicker</div>
+                    <h1>@Html.Raw(slide.Title)</h1>
+                    <p>@slide.Subtitle</p>
+                    <div class="cta">
+                        @if (!string.IsNullOrEmpty(slide.PrimaryBtnText))
+                        {
+                            <a href="@slide.PrimaryBtnUrl" class="btn btn-primary">@slide.PrimaryBtnText</a>
+                        }
+                        @if (!string.IsNullOrEmpty(slide.SecondaryBtnText))
+                        {
+                            <a href="@slide.SecondaryBtnUrl" class="btn btn-ghost">@slide.SecondaryBtnText</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="hero-ctrl">
+        <div class="hero-arrows">
+            <button id="heroPrev" aria-label="이전">‹</button>
+            <button id="heroNext" aria-label="다음">›</button>
+        </div>
+        <div class="hero-dots">
+            <span class="cur" id="heroCur">01</span>
+            <span class="bar"><span class="fill" id="heroFill"></span></span>
+            <span id="heroTot">@visibleSlides.Count.ToString("00")</span>
+        </div>
+    </div>
+
+    <div class="scrollhint">SCROLL</div>
+</section>

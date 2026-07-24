@@ -1,0 +1,78 @@
+@model ChurchWeb.Web.Models.News.NoticeDetailVm
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 소식 &nbsp;›&nbsp; <b>교회소식</b>", Model.Title, "")' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "notices")' />
+
+<main class="content notice-detail">
+    <div class="container">
+
+        <!-- 소식 헤더 -->
+        <div class="notice-header">
+            <div class="meta">
+                <span class="cat">@Model.Category</span>
+                <span class="author">@Model.Author</span>
+                <span class="date">@Model.Date</span>
+                <span class="views">조회 @Model.Views</span>
+            </div>
+            <h1>@Model.Title</h1>
+        </div>
+
+        <!-- 본문 -->
+        <div class="notice-body">
+            @Html.Raw(Model.BodyHtml)
+        </div>
+
+        <!-- 첨부파일 (있을 경우만 표시) -->
+        @if (Model.Attachments.Count > 0)
+        {
+            <div class="attachments">
+                <div class="attach-header">📎 첨부파일</div>
+                <div class="attach-list">
+                    @foreach (var file in Model.Attachments)
+                    {
+                        <a href="@file.Url" class="attach-item" download>
+                            <span class="icon">📄</span>
+                            <span class="name">@file.Name</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- 이전/다음 네비게이션 -->
+        <div class="nav-items">
+            @if (Model.Prev != null)
+            {
+                <a href="/news/notices/@Model.Prev.Id" class="nav-prev">
+                    <div class="label">‹ 이전 글</div>
+                    <div class="title">@Model.Prev.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-prev disabled"></div>
+            }
+
+            @if (Model.Next != null)
+            {
+                <a href="/news/notices/@Model.Next.Id" class="nav-next">
+                    <div class="label">다음 글 ›</div>
+                    <div class="title">@Model.Next.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-next disabled"></div>
+            }
+        </div>
+
+        <!-- 목록으로 버튼 -->
+        <div class="actions-bottom">
+            <a href="/news/notices" class="btn-list">목록으로</a>
+        </div>
+
+    </div>
+</main>

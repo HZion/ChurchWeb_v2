@@ -1,0 +1,17 @@
+@*
+    서브 탭 Partial (교회소개/말씀과찬양 공통)
+    사용 예 (AboutTabVm): <partial name="_SubNav" model='(Model.Tabs, "vision")' />
+    사용 예 (SermonTabVm): <partial name="_SubNav" model='(Model.Tabs, "sunday")' />
+*@
+@model (System.Collections.Generic.IEnumerable<object> Tabs, string CurrentKey)
+
+<nav class="subnav">
+    <div class="container">
+        @foreach (var tab in Model.Tabs.Where((Func<dynamic, bool>)(t => t.IsVisible)).OrderBy((Func<dynamic, int>)(t => t.SortOrder)))
+        {
+            <a href="@tab.Url" class="@(tab.Key == Model.CurrentKey ? "active" : "")">
+                @tab.Title
+            </a>
+        }
+    </div>
+</nav>

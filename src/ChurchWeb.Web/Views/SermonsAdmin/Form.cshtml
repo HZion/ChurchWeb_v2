@@ -1,0 +1,207 @@
+@model ChurchWeb.Web.Models.Admin.SermonFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "설교 등록" : "설교 수정";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>@ViewData["Title"]</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="/Admin/Sermons">설교 관리</a></li>
+                    <li class="breadcrumb-item active">@(Model.Id == 0 ? "등록" : "수정")</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <form asp-action="Save" asp-controller="SermonsAdmin" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger" role="alert">
+                <div asp-validation-summary="All" class="text-danger"></div>
+            </div>
+        }
+
+        <div class="row g-3">
+            <!-- 제목 -->
+            <div class="col-md-8">
+                <label asp-for="Title" class="form-label">제목 <span class="text-danger">*</span></label>
+                <input asp-for="Title" class="form-control" placeholder="설교 제목을 입력하세요" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <!-- 설교일 -->
+            <div class="col-md-4">
+                <label asp-for="PreachedOn" class="form-label">설교일 <span class="text-danger">*</span></label>
+                <input asp-for="PreachedOn" type="date" class="form-control" />
+                <span asp-validation-for="PreachedOn" class="text-danger"></span>
+            </div>
+
+            <!-- 본문(성구) -->
+            <div class="col-md-6">
+                <label asp-for="Verse" class="form-label">본문(성구) <span class="text-danger">*</span></label>
+                <input asp-for="Verse" class="form-control" placeholder="예: 시편 23:1" />
+                <span asp-validation-for="Verse" class="text-danger"></span>
+            </div>
+
+            <!-- 설교자 -->
+            <div class="col-md-6">
+                <label asp-for="Preacher" class="form-label">설교자 <span class="text-danger">*</span></label>
+                <input asp-for="Preacher" class="form-control" placeholder="예: 홍길동 목사" />
+                <span asp-validation-for="Preacher" class="text-danger"></span>
+            </div>
+
+            <!-- 분류 -->
+            <div class="col-md-4">
+                <label asp-for="Category" class="form-label">분류 <span class="text-danger">*</span></label>
+                <select asp-for="Category" class="form-select">
+                    <option value="sunday">주일설교</option>
+                    <option value="special">특별설교</option>
+                </select>
+                <span asp-validation-for="Category" class="text-danger"></span>
+            </div>
+
+            <!-- 재생시간 -->
+            <div class="col-md-4">
+                <label asp-for="Duration" class="form-label">재생시간</label>
+                <input asp-for="Duration" class="form-control" placeholder="예: 42:10" />
+                <span asp-validation-for="Duration" class="text-danger"></span>
+                <small class="form-text text-muted">mm:ss 형식으로 입력</small>
+            </div>
+
+            <!-- 순서 -->
+            <div class="col-md-4">
+                <label asp-for="SortOrder" class="form-label">순서</label>
+                <input asp-for="SortOrder" type="number" class="form-control" min="0" />
+                <span asp-validation-for="SortOrder" class="text-danger"></span>
+                <small class="form-text text-muted">0이면 자동 설정</small>
+            </div>
+
+            <!-- 유튜브 URL -->
+            <div class="col-12">
+                <label asp-for="YoutubeUrl" class="form-label">유튜브 URL</label>
+                <div class="input-group">
+                    <input asp-for="YoutubeUrl" class="form-control" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+                    <button type="button" class="btn btn-outline-secondary" id="btnFetchMetadata">
+                        <span class="spinner-border spinner-border-sm d-none" id="fetchSpinner"></span>
+                        <span id="btnFetchText">자동 가져오기</span>
+                    </button>
+                </div>
+                <span asp-validation-for="YoutubeUrl" class="text-danger"></span>
+                <small class="form-text text-muted">YouTube URL 입력 후 '자동 가져오기'를 클릭하면 제목, 썸네일, 재생시간 등이 자동으로 입력됩니다</small>
+            </div>
+
+            <!-- 동영상 설명 (VideoDescription) -->
+            <div class="col-12">
+                <label asp-for="VideoDescription" class="form-label">동영상 설명</label>
+                <textarea asp-for="VideoDescription" class="form-control" rows="3" placeholder="YouTube 동영상 설명"></textarea>
+                <span asp-validation-for="VideoDescription" class="text-danger"></span>
+                <small class="form-text text-muted">자동 가져오기로 YouTube 동영상 설명을 불러올 수 있습니다</small>
+            </div>
+
+            <!-- 썸네일 URL -->
+            <div class="col-12">
+                <label asp-for="ThumbnailUrl" class="form-label">썸네일 URL</label>
+                <input asp-for="ThumbnailUrl" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="ThumbnailUrl" class="text-danger"></span>
+                <small class="form-text text-muted">나중에 파일 업로드 기능 추가 예정</small>
+            </div>
+
+            <!-- 개요 -->
+            <div class="col-12">
+                <label asp-for="Summary" class="form-label">개요</label>
+                <textarea asp-for="Summary" class="form-control" rows="4" placeholder="설교 개요를 입력하세요"></textarea>
+                <span asp-validation-for="Summary" class="text-danger"></span>
+            </div>
+
+            <!-- 표시 여부 -->
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input asp-for="IsVisible" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsVisible" class="form-check-label">공개 사이트에 표시</label>
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <a href="/Admin/Sermons" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Id == 0 ? "등록" : "수정")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // YouTube 메타데이터 자동 가져오기
+            $('#btnFetchMetadata').click(function() {
+                var youtubeUrl = $('#youtubeUrl').val();
+
+                if (!youtubeUrl) {
+                    alert('YouTube URL을 입력하세요.');
+                    return;
+                }
+
+                // 로딩 시작
+                $('#fetchSpinner').removeClass('d-none');
+                $('#btnFetchText').text('가져오는 중...');
+                $('#btnFetchMetadata').prop('disabled', true);
+
+                // API 호출
+                $.ajax({
+                    url: '/Admin/Sermons/FetchYouTubeMetadata',
+                    type: 'GET',
+                    data: { url: youtubeUrl },
+                    success: function(response) {
+                        if (response.success) {
+                            // 메타데이터 자동 입력
+                            if (response.data.title && !$('#Title').val()) {
+                                $('#Title').val(response.data.title);
+                            }
+                            if (response.data.description) {
+                                $('#VideoDescription').val(response.data.description);
+                            }
+                            if (response.data.thumbnailUrl) {
+                                $('#ThumbnailUrl').val(response.data.thumbnailUrl);
+                            }
+                            if (response.data.duration) {
+                                $('#Duration').val(response.data.duration);
+                            }
+
+                            // 성공 메시지
+                            alert('YouTube 메타데이터를 가져왔습니다!');
+                        } else {
+                            alert(response.message || '메타데이터를 가져올 수 없습니다.');
+                        }
+                    },
+                    error: function() {
+                        alert('서버 오류가 발생했습니다.');
+                    },
+                    complete: function() {
+                        // 로딩 종료
+                        $('#fetchSpinner').addClass('d-none');
+                        $('#btnFetchText').text('자동 가져오기');
+                        $('#btnFetchMetadata').prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+}

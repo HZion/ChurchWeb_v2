@@ -1,0 +1,213 @@
+@model ChurchWeb.Web.Models.Admin.AlbumListViewModel
+@{
+    ViewData["Title"] = "갤러리 앨범 관리";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>갤러리 앨범 관리</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item active">갤러리 앨범 관리</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="/Admin/Albums/Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 앨범 등록
+        </a>
+    </div>
+</div>
+
+<!-- 검색 및 필터 -->
+<div class="admin-card mb-3">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <input type="text" name="searchTerm" class="form-control" placeholder="제목 또는 설명 검색" value="@Model.Filter.SearchTerm" />
+        </div>
+        <div class="col-md-2">
+            <select name="year" class="form-select">
+                <option value="">전체 연도</option>
+                @foreach (var year in Model.AvailableYears)
+                {
+                    <option value="@year" selected="@(Model.Filter.Year == year)">@year</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="isVisible" class="form-select">
+                <option value="">전체</option>
+                <option value="true" selected="@(Model.Filter.IsVisible == true)">공개</option>
+                <option value="false" selected="@(Model.Filter.IsVisible == false)">비공개</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="sortBy" class="form-select">
+                <option value="EventDate" selected="@(Model.Filter.SortBy == "EventDate")">이벤트 날짜</option>
+                <option value="Title" selected="@(Model.Filter.SortBy == "Title")">제목</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="sortDescending" class="form-select">
+                <option value="true" selected="@Model.Filter.SortDescending">내림차순</option>
+                <option value="false" selected="@(!Model.Filter.SortDescending)">오름차순</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-secondary w-100">검색</button>
+        </div>
+    </form>
+</div>
+
+<!-- 앨범 목록 -->
+<div class="admin-card">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">표지</th>
+                    <th>제목</th>
+                    <th>이벤트 날짜</th>
+                    <th>카테고리</th>
+                    <th>사진 수</th>
+                    <th>상태</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Albums.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4">등록된 앨범이 없습니다.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var album in Model.Albums)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(album.CoverImageUrl))
+                                {
+                                    <img src="@album.CoverImageUrl" alt="@album.Title" class="img-thumbnail" style="max-width: 80px; max-height: 80px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-images text-muted"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <div>@album.Title</div>
+                                @if (!string.IsNullOrEmpty(album.Category))
+                                {
+                                    <small class="text-muted">@album.Category</small>
+                                }
+                            </td>
+                            <td>@album.EventDate.ToString("yyyy-MM-dd")</td>
+                            <td>@album.Category</td>
+                            <td>
+                                <span class="badge bg-info">@album.PhotoCount 장</span>
+                            </td>
+                            <td>
+                                <span class="badge @(album.IsVisible ? "bg-success" : "bg-secondary")">
+                                    @(album.IsVisible ? "공개" : "비공개")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/Admin/Albums/Edit/@album.Id" class="btn btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleVisibility(@album.Id)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="deleteAlbum(@album.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 페이징 -->
+    @if (Model.Pagination.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(!Model.Pagination.HasPrevious ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.Pagination.CurrentPage - 1)">이전</a>
+                </li>
+                @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.Pagination.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="?page=@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(!Model.Pagination.HasNext ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.Pagination.CurrentPage + 1)">다음</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function toggleVisibility(id) {
+            if (!confirm('표시 여부를 변경하시겠습니까?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch(`/Admin/Albums/ToggleVisibility/${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function deleteAlbum(id) {
+            if (!confirm('정말 삭제하시겠습니까? 앨범의 모든 사진도 함께 삭제됩니다.')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch(`/Admin/Albums/Delete/${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+    </script>
+    @Html.AntiForgeryToken()
+}

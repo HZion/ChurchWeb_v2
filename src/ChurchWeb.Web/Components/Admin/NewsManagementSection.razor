@@ -1,0 +1,538 @@
+@using ChurchWeb.Core.Entities.News
+@using ChurchWeb.Web.Components.Shared
+@inject INoticeAdminService NoticeService
+@inject ILogger<NewsManagementSection> Logger
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">교회 소식</h2>
+        <p>공지사항과 소식을 등록하고 관리합니다.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null">×</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null">×</button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="row" style="align-items:center;margin-bottom:1rem">
+            <h3 style="margin:0">공지사항 목록 (@totalCount 개)</h3>
+            <div class="spacer"></div>
+            <button type="button" class="btn primary" @onclick="ShowCreateForm">
+                + 새 공지 작성
+            </button>
+        </div>
+
+        @* 검색/필터 *@
+        <div class="grid g4" style="margin-bottom:1.5rem">
+            <div class="field">
+                <input type="text" @bind="searchTerm" @bind:event="oninput" placeholder="제목, 작성자 검색" />
+            </div>
+            <div class="field">
+                <select @bind="filterCategory">
+                    <option value="">전체 분류</option>
+                    <option value="church">교회 소식</option>
+                    <option value="member">교우 소식</option>
+                </select>
+            </div>
+            <div class="field">
+                <select @bind="filterPinned">
+                    <option value="">필독 전체</option>
+                    <option value="true">필독만</option>
+                    <option value="false">일반만</option>
+                </select>
+            </div>
+            <div class="field">
+                <button type="button" class="btn primary" style="width:100%" @onclick="LoadNotices">검색</button>
+            </div>
+        </div>
+
+        @if (notices.Any())
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">순서</th>
+                            <th>제목</th>
+                            <th style="width: 100px;">분류</th>
+                            <th style="width: 100px;">작성자</th>
+                            <th style="width: 110px;">작성일</th>
+                            <th style="width: 70px;">조회</th>
+                            <th style="width: 80px;">필독</th>
+                            <th style="width: 80px;">표시</th>
+                            <th style="width: 150px;" class="text-center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var notice in notices)
+                        {
+                            <tr>
+                                <td style="text-align:center">
+                                    <span class="tag">@notice.SortOrder</span>
+                                </td>
+                                <td>
+                                    <b>@notice.Title</b>
+                                    @if (notice.AttachmentCount > 0)
+                                    {
+                                        <span style="color:var(--gold);margin-left:0.25rem">📎 @notice.AttachmentCount</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="tag" style="@(notice.CategoryKey == "church" ? "background:var(--gold);color:#fff" : "background:#17a2b8;color:#fff")">
+                                        @(notice.CategoryKey == "church" ? "교회" : "교우")
+                                    </span>
+                                </td>
+                                <td>@notice.Author</td>
+                                <td>@notice.PostedOn.ToString("yyyy.MM.dd")</td>
+                                <td style="text-align:center">@notice.Views</td>
+                                <td>
+                                    <button type="button" class="tag @(notice.IsPinned ? "" : "g")" @onclick="() => TogglePinned(notice.Id)">
+                                        @(notice.IsPinned ? "필독" : "일반")
+                                    </button>
+                                </td>
+                                <td>
+                                    <button type="button" class="tag @(notice.IsVisible ? "g" : "")" @onclick="() => ToggleVisibility(notice.Id)">
+                                        @(notice.IsVisible ? "표시" : "숨김")
+                                    </button>
+                                </td>
+                                <td style="text-align:center">
+                                    <div class="rowacts">
+                                        <button class="icon-btn" @onclick="() => ShowEditForm(notice.Id)">
+                                            <Icon Name="pencil" />
+                                        </button>
+                                        <button class="icon-btn danger" @onclick="() => DeleteNotice(notice.Id)">
+                                            <Icon Name="trash" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @* 페이지네이션 *@
+            @if (totalPages > 1)
+            {
+                <div style="display:flex;justify-content:center;gap:0.5rem;margin-top:1rem">
+                    <button type="button" class="btn ghost" @onclick="PreviousPage" disabled="@(currentPage <= 1)">이전</button>
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var pageNum = i;
+                        <button type="button" class="btn @(currentPage == pageNum ? "primary" : "ghost")" @onclick="() => GoToPage(pageNum)">@pageNum</button>
+                    }
+                    <button type="button" class="btn ghost" @onclick="NextPage" disabled="@(currentPage >= totalPages)">다음</button>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align:center;padding:3rem 0">
+                <p style="color:#999">등록된 공지사항이 없습니다.</p>
+                <button type="button" class="btn primary" @onclick="ShowCreateForm">첫 공지 작성하기</button>
+            </div>
+        }
+    </div>
+
+    @* 공지사항 추가/수정 폼 *@
+    @if (showForm)
+    {
+        <div class="card mt">
+            <h3>@(editingNoticeId == 0 ? "새 공지 작성" : "공지 수정")</h3>
+
+            <EditForm Model="@formModel" OnValidSubmit="SaveNotice">
+                <DataAnnotationsValidator />
+
+                <div class="grid g2">
+                    <div class="field">
+                        <label>제목</label>
+                        <InputText @bind-value="formModel.Title" type="text" placeholder="공지사항 제목" />
+                        <ValidationMessage For="@(() => formModel.Title)" class="text-danger" />
+                    </div>
+
+                    <div class="field">
+                        <label>작성자</label>
+                        <InputText @bind-value="formModel.Author" type="text" placeholder="작성자 이름" />
+                        <ValidationMessage For="@(() => formModel.Author)" class="text-danger" />
+                    </div>
+
+                    <div class="field">
+                        <label>작성일</label>
+                        <InputDate @bind-value="formModel.PostedOn" />
+                        <ValidationMessage For="@(() => formModel.PostedOn)" class="text-danger" />
+                    </div>
+
+                    <div class="field">
+                        <label>분류</label>
+                        <InputSelect @bind-value="formModel.CategoryKey">
+                            <option value="church">교회 소식</option>
+                            <option value="member">교우 소식</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label>정렬 순서</label>
+                        <InputNumber @bind-value="formModel.SortOrder" type="number" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>본문 내용</label>
+                    <InputTextArea @bind-value="formModel.BodyHtml" rows="10" placeholder="공지사항 내용을 입력하세요 (HTML 사용 가능)" />
+                    <ValidationMessage For="@(() => formModel.BodyHtml)" class="text-danger" />
+                </div>
+
+                <div class="field">
+                    <label style="display:flex;align-items:center;gap:0.5rem">
+                        <InputCheckbox @bind-value="formModel.IsPinned" />
+                        필독으로 상단 고정
+                    </label>
+                </div>
+
+                <div class="field">
+                    <label style="display:flex;align-items:center;gap:0.5rem">
+                        <InputCheckbox @bind-value="formModel.IsVisible" />
+                        공지사항 표시
+                    </label>
+                </div>
+
+                @if (editingNoticeId > 0 && formModel.Attachments.Any())
+                {
+                    <div class="field">
+                        <label>첨부파일 (@formModel.Attachments.Count 개)</label>
+                        <ul style="list-style:none;padding:0">
+                            @foreach (var attachment in formModel.Attachments)
+                            {
+                                <li style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0">
+                                    <span>📎 @attachment.FileName</span>
+                                    <a href="@attachment.FileUrl" target="_blank" class="btn ghost" style="padding:0.25rem 0.5rem;font-size:0.875rem">다운로드</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="flex-end" style="margin-top:1.5rem">
+                    <button type="button" class="btn ghost" @onclick="CancelForm"><Icon Name="x" /> 취소</button>
+                    <button type="submit" class="btn primary"><Icon Name="save" /> 저장하기</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+</section>
+
+@code {
+    private List<NoticeItemViewModel> notices = new();
+    private NoticeFormViewModel formModel = new();
+    private string? successMessage;
+    private string? errorMessage;
+    private bool showForm = false;
+    private int editingNoticeId = 0;
+
+    private int currentPage = 1;
+    private int pageSize = 20;
+    private int totalCount = 0;
+    private int totalPages => (int)Math.Ceiling((double)totalCount / pageSize);
+
+    private string? searchTerm;
+    private string? filterCategory;
+    private string? filterPinned;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotices();
+    }
+
+    private async Task LoadNotices()
+    {
+        try
+        {
+            bool? isPinned = filterPinned switch
+            {
+                "true" => true,
+                "false" => false,
+                _ => null
+            };
+
+            var (items, count) = await NoticeService.GetPagedNoticesAsync(
+                currentPage, pageSize, searchTerm, filterCategory, isPinned);
+
+            totalCount = count;
+            notices = items.Select(n => new NoticeItemViewModel
+            {
+                Id = n.Id,
+                CategoryKey = n.CategoryKey,
+                Title = n.Title,
+                Author = n.Author,
+                PostedOn = n.PostedOn,
+                Views = n.Views,
+                IsPinned = n.IsPinned,
+                IsVisible = n.IsVisible,
+                SortOrder = n.SortOrder,
+                AttachmentCount = n.Attachments.Count
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading notices");
+            errorMessage = "공지사항 목록을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private void ShowCreateForm()
+    {
+        editingNoticeId = 0;
+        formModel = new NoticeFormViewModel
+        {
+            PostedOn = DateTime.Today,
+            CategoryKey = "church",
+            IsVisible = true,
+            IsPinned = false,
+            SortOrder = notices.Any() ? notices.Max(n => n.SortOrder) + 1 : 1
+        };
+        showForm = true;
+        successMessage = null;
+        errorMessage = null;
+    }
+
+    private async Task ShowEditForm(int id)
+    {
+        try
+        {
+            var notice = await NoticeService.GetNoticeByIdWithAttachmentsAsync(id);
+            if (notice == null)
+            {
+                errorMessage = "공지사항을 찾을 수 없습니다.";
+                return;
+            }
+
+            editingNoticeId = id;
+            formModel = new NoticeFormViewModel
+            {
+                Id = notice.Id,
+                CategoryKey = notice.CategoryKey,
+                Title = notice.Title,
+                Author = notice.Author,
+                PostedOn = notice.PostedOn,
+                BodyHtml = notice.BodyHtml,
+                IsPinned = notice.IsPinned,
+                IsVisible = notice.IsVisible,
+                SortOrder = notice.SortOrder,
+                Attachments = notice.Attachments.Select(a => new NoticeAttachmentViewModel
+                {
+                    Id = a.Id,
+                    FileName = a.FileName,
+                    FileUrl = a.FileUrl,
+                    SortOrder = a.SortOrder
+                }).ToList()
+            };
+            showForm = true;
+            successMessage = null;
+            errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading notice for edit");
+            errorMessage = "공지사항을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task SaveNotice()
+    {
+        try
+        {
+            if (editingNoticeId == 0)
+            {
+                var notice = new Notice
+                {
+                    CategoryKey = formModel.CategoryKey,
+                    Title = formModel.Title,
+                    Author = formModel.Author,
+                    PostedOn = formModel.PostedOn,
+                    BodyHtml = formModel.BodyHtml,
+                    IsPinned = formModel.IsPinned,
+                    IsVisible = formModel.IsVisible,
+                    SortOrder = formModel.SortOrder
+                };
+
+                await NoticeService.CreateNoticeAsync(notice);
+                successMessage = "공지사항이 성공적으로 등록되었습니다.";
+            }
+            else
+            {
+                var notice = await NoticeService.GetNoticeByIdAsync(editingNoticeId);
+                if (notice == null)
+                {
+                    errorMessage = "공지사항을 찾을 수 없습니다.";
+                    return;
+                }
+
+                notice.CategoryKey = formModel.CategoryKey;
+                notice.Title = formModel.Title;
+                notice.Author = formModel.Author;
+                notice.PostedOn = formModel.PostedOn;
+                notice.BodyHtml = formModel.BodyHtml;
+                notice.IsPinned = formModel.IsPinned;
+                notice.IsVisible = formModel.IsVisible;
+                notice.SortOrder = formModel.SortOrder;
+
+                await NoticeService.UpdateNoticeAsync(notice);
+                successMessage = "공지사항이 성공적으로 수정되었습니다.";
+            }
+
+            showForm = false;
+            await LoadNotices();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving notice");
+            errorMessage = "공지사항 저장 중 오류가 발생했습니다.";
+        }
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        formModel = new NoticeFormViewModel();
+        editingNoticeId = 0;
+    }
+
+    private async Task ToggleVisibility(int id)
+    {
+        try
+        {
+            var result = await NoticeService.ToggleVisibilityAsync(id);
+            if (result)
+            {
+                await LoadNotices();
+                successMessage = "표시 여부가 변경되었습니다.";
+            }
+            else
+            {
+                errorMessage = "공지사항을 찾을 수 없습니다.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling visibility");
+            errorMessage = "표시 여부 변경 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task TogglePinned(int id)
+    {
+        try
+        {
+            var result = await NoticeService.TogglePinnedAsync(id);
+            if (result)
+            {
+                await LoadNotices();
+                successMessage = "필독 여부가 변경되었습니다.";
+            }
+            else
+            {
+                errorMessage = "공지사항을 찾을 수 없습니다.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling pinned");
+            errorMessage = "필독 여부 변경 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task DeleteNotice(int id)
+    {
+        try
+        {
+            var result = await NoticeService.DeleteNoticeAsync(id);
+            if (result)
+            {
+                await LoadNotices();
+                successMessage = "공지사항이 삭제되었습니다.";
+            }
+            else
+            {
+                errorMessage = "공지사항 삭제에 실패했습니다.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting notice");
+            errorMessage = "공지사항 삭제 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        await LoadNotices();
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadNotices();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadNotices();
+        }
+    }
+
+    // View models (inline for convenience)
+    public class NoticeItemViewModel
+    {
+        public int Id { get; set; }
+        public string CategoryKey { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public DateTime PostedOn { get; set; }
+        public int Views { get; set; }
+        public bool IsPinned { get; set; }
+        public bool IsVisible { get; set; }
+        public int SortOrder { get; set; }
+        public int AttachmentCount { get; set; }
+    }
+
+    public class NoticeFormViewModel
+    {
+        public int Id { get; set; }
+        public string CategoryKey { get; set; } = "church";
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public DateTime PostedOn { get; set; } = DateTime.Today;
+        public string BodyHtml { get; set; } = string.Empty;
+        public bool IsPinned { get; set; }
+        public bool IsVisible { get; set; } = true;
+        public int SortOrder { get; set; }
+        public List<NoticeAttachmentViewModel> Attachments { get; set; } = new();
+    }
+
+    public class NoticeAttachmentViewModel
+    {
+        public int Id { get; set; }
+        public string FileName { get; set; } = string.Empty;
+        public string FileUrl { get; set; } = string.Empty;
+        public int SortOrder { get; set; }
+    }
+}

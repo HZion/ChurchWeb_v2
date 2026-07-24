@@ -1,0 +1,40 @@
+@model ChurchWeb.Web.Models.Home.NewsVm
+
+<section class="section" id="news">
+    <div class="container">
+        <div class="section-head">
+            <div class="ey">@Model.SectionEyebrow</div>
+            <h2>@Model.SectionTitle</h2>
+        </div>
+        <div class="news-cols">
+            @* 공지사항 *@
+            <div>
+                <h3>공지사항</h3>
+                <ul class="notice-list">
+                    @foreach (var notice in Model.Notices)
+                    {
+                        <li>
+                            @if (notice.IsPinned)
+                            {
+                                <span class="badge-pin">필독</span>
+                            }
+                            <a href="@notice.Url" class="nt">@notice.Title</a>
+                            <span class="nd">@notice.Date</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @* 교회 행사 *@
+            <div>
+                <h3>교회 행사</h3>
+                <div class="gallery">
+                    @foreach (var ev in Model.Events)
+                    {
+                        <a href="@ev.Url" class="g">@ev.Title</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,105 @@
+@model ChurchWeb.Web.Models.Home.MediaVm
+
+@{
+    string GetYouTubeEmbedUrl(string url, bool withAutoplay = false)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return "";
+
+        string videoId = "";
+
+        // 이미 embed URL인 경우
+        if (url.Contains("/embed/"))
+        {
+            var parts = url.Split("/embed/");
+            if (parts.Length > 1)
+            {
+                videoId = parts[1].Split('?')[0];
+            }
+        }
+        // youtu.be 형식
+        else if (url.Contains("youtu.be/"))
+        {
+            videoId = url.Split("youtu.be/")[1].Split('?')[0];
+        }
+        // youtube.com/watch?v= 형식
+        else if (url.Contains("youtube.com/watch"))
+        {
+            var uri = new Uri(url);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            videoId = query["v"];
+        }
+
+        if (string.IsNullOrWhiteSpace(videoId))
+            return url;
+
+        // autoplay와 mute 파라미터 추가 (자동재생은 음소거 필요)
+        var autoplayParam = withAutoplay ? "&autoplay=1&mute=1" : "";
+        return $"https://www.youtube.com/embed/{videoId}?enablejsapi=1{autoplayParam}";
+    }
+
+    var baseEmbedUrl = GetYouTubeEmbedUrl(Model.YouTubeUrl, false);
+    var autoplayEmbedUrl = GetYouTubeEmbedUrl(Model.YouTubeUrl, true);
+}
+
+<section class="section" id="media" data-autoplay-section>
+    <div class="container">
+        <div class="section-head">
+            <div class="ey">@Model.SectionEyebrow</div>
+            <h2>@Model.SectionTitle</h2>
+            <p>@Model.SectionDescription</p>
+        </div>
+        <div class="videoframe">
+            @if (!string.IsNullOrWhiteSpace(baseEmbedUrl))
+            {
+                <iframe
+                    id="promo-video-iframe"
+                    data-src="@autoplayEmbedUrl"
+                    src="@baseEmbedUrl"
+                    title="YouTube video player"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;">
+                </iframe>
+            }
+            else
+            {
+                <div class="play">▶</div>
+                <div class="cap">@Model.Caption</div>
+            }
+        </div>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(baseEmbedUrl))
+{
+    <script>
+        // Intersection Observer를 사용한 자동 재생
+        (function() {
+            const section = document.querySelector('[data-autoplay-section]');
+            const iframe = document.getElementById('promo-video-iframe');
+
+            if (!section || !iframe) return;
+
+            let hasAutoPlayed = false;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !hasAutoPlayed) {
+                        // 섹션이 50% 이상 보이면 자동 재생
+                        const autoplayUrl = iframe.getAttribute('data-src');
+                        if (autoplayUrl) {
+                            iframe.src = autoplayUrl;
+                            hasAutoPlayed = true;
+                        }
+                    }
+                });
+            }, {
+                threshold: 0.5 // 50% 이상 보일 때
+            });
+
+            observer.observe(section);
+        })();
+    </script>
+}

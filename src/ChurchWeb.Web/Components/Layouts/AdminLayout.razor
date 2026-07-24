@@ -1,0 +1,92 @@
+@inherits LayoutComponentBase
+@inject SignInManager<ChurchWeb.Core.Entities.Identity.ApplicationUser> SignInManager
+@inject UserManager<ChurchWeb.Core.Entities.Identity.ApplicationUser> UserManager
+
+<div class="app">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="mark">교</div>
+            <div>
+                <h1>ChurchWeb</h1>
+                <span>관리 시스템</span>
+            </div>
+        </div>
+
+        <nav class="nav">
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor" Match="NavLinkMatch.All">
+                <span class="ic">▦</span> 대시보드
+            </NavLink>
+
+            <div class="group">콘텐츠 관리</div>
+
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/church-info">
+                <span class="ic">✎</span> 홈화면 관리
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/menu">
+                <span class="ic">☰</span> 메뉴 노출 관리
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/people">
+                <span class="ic">👥</span> 섬기는 사람들
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/sermons">
+                <span class="ic">▶</span> 설교 말씀
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/notices">
+                <span class="ic">✉</span> 교회 소식
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/outreach">
+                <span class="ic">◈</span> 온라인 전도카드
+            </NavLink>
+
+            <div class="group">시스템</div>
+
+            <a class="soon">
+                <span class="ic">⚙</span> 무코드 빌더
+            </a>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/bulletins">
+                <span class="ic">◐</span> 주보
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/albums">
+                <span class="ic">▣</span> 갤러리
+            </NavLink>
+            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/calendar">
+                <span class="ic">◑</span> 교회일정
+            </NavLink>
+        </nav>
+
+        @if (User != null && SignInManager.IsSignedIn(User))
+        {
+            <div class="side-foot">
+                <div class="avatar">관</div>
+                <div>
+                    <div style="color:#efe7da;font-weight:700">@User?.Identity?.Name</div>
+                    <form action="/Account/Logout" method="post" style="margin: 0; display: inline;">
+                        <button type="submit" style="background:none;border:none;color:#a99a86;font-size:11px;padding:0;cursor:pointer;">로그아웃</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+        @Body
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private System.Security.Claims.ClaimsPrincipal? User { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateTask != null)
+        {
+            var authState = await AuthenticationStateTask;
+            User = authState.User;
+        }
+    }
+}

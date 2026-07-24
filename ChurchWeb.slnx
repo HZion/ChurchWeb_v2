@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChurchWeb.Application/ChurchWeb.Application.csproj" />
+    <Project Path="src/ChurchWeb.Core/ChurchWeb.Core.csproj" />
+    <Project Path="src/ChurchWeb.Infrastructure/ChurchWeb.Infrastructure.csproj" />
+    <Project Path="src/ChurchWeb.Web/ChurchWeb.Web.csproj" />
+  </Folder>
+</Solution>

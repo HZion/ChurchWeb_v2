@@ -1,0 +1,72 @@
+@model ChurchWeb.Web.Models.About.AboutPeopleVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<partial name="_PageHero" model='("홈 &nbsp;›&nbsp; 교회소개 &nbsp;›&nbsp; <b>" + Model.PageTitle + "</b>", Model.PageTitle, Model.PageSubtitle)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "people")' />
+
+<main class="content">
+    <div class="container">
+        @* 담임목사 대표 카드 *@
+        <div class="lead-pastor">
+            <div class="photo">
+                @if (!string.IsNullOrEmpty(Model.LeadPastor.Photo))
+                {
+                    <img src="@Model.LeadPastor.Photo" alt="@Model.LeadPastor.Name" loading="lazy" />
+                }
+                else
+                {
+                    <text>[사진 자리표시자]</text>
+                }
+            </div>
+            <div class="info">
+                <div class="role">@Model.LeadPastor.Title</div>
+                <div class="name">@Model.LeadPastor.Name <span>목사</span></div>
+                <div class="quote">@Model.LeadPastor.Quote</div>
+                <div class="desc">@Model.LeadPastor.Desc</div>
+            </div>
+        </div>
+
+        @* 필터 탭 *@
+        <div class="filters">
+            @foreach (var cat in Model.Categories.Where(c => c.IsVisible).OrderBy(c => c.SortOrder))
+            {
+                <button class="filter-btn @(cat.Key == "all" ? "active" : "")" data-category="@cat.Key">
+                    @cat.Label
+                </button>
+            }
+        </div>
+
+        @* 인물 카드 그리드 *@
+        <div class="people">
+            @foreach (var person in Model.People.Where(p => p.IsVisible).OrderBy(p => p.SortOrder))
+            {
+                <div class="person" data-category="@person.Category">
+                    <div class="pho">
+                        @if (!string.IsNullOrEmpty(person.Photo))
+                        {
+                            <img src="@person.Photo" alt="@person.Name" loading="lazy" />
+                        }
+                        else
+                        {
+                            <text>[사진 자리표시자]</text>
+                        }
+                    </div>
+                    <div class="b">
+                        <div class="r">@person.Role</div>
+                        <div class="n">@person.Name</div>
+                        @if (!string.IsNullOrEmpty(person.Ministry))
+                        {
+                            <div class="m">@person.Ministry</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/people-filter.js"></script>
+}

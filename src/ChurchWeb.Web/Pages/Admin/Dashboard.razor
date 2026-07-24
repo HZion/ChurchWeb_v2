@@ -1,0 +1,42 @@
+@page "/Admin/Blazor"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@layout AdminLayout
+
+<div class="topbar">
+    <div class="crumb">관리자 · <b>대시보드</b></div>
+    <div class="spacer"></div>
+    <a href="/" class="btn ghost" target="_blank">사이트 미리보기 ↗</a>
+</div>
+
+<div class="content">
+    <DashboardSection OnNavigate="@HandleNavigate" />
+</div>
+
+@code {
+    private void HandleNavigate(string section)
+    {
+        // Navigation handled by NavLink in AdminLayout
+        // This is just for compatibility with DashboardSection's quick action buttons
+        var routes = new Dictionary<string, string>
+        {
+            { "basic", "/Admin/Blazor/church-info" },
+            { "menu", "/Admin/Blazor/menu" },
+            { "sermon", "/Admin/Blazor/sermons" },
+            { "news", "/Admin/Blazor/notices" },
+            { "card", "/Admin/Blazor/outreach" },
+            { "bulletins", "/Admin/Blazor/bulletins" },
+            { "albums", "/Admin/Blazor/albums" },
+            { "calendar", "/Admin/Blazor/calendar" }
+        };
+
+        if (routes.ContainsKey(section))
+        {
+            Navigation.NavigateTo(routes[section]);
+        }
+    }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+}

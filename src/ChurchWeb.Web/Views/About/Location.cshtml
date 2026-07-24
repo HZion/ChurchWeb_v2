@@ -1,0 +1,86 @@
+@model ChurchWeb.Web.Models.About.AboutLocationVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 교회소개 &nbsp;›&nbsp; <b>{Model.PageTitle}</b>", Model.PageTitle, Model.PageSubtitle)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "location")' />
+
+<main class="content">
+    <div class="container">
+        <!-- 지도 -->
+        <div class="map">
+            <div id="kakao-map" style="width:100%;height:400px;border-radius:8px"></div>
+        </div>
+
+        <!-- 교회 정보 -->
+        <div class="loc-info">
+            <div class="block">
+                <div class="block-head"><span class="bar"></span><h3>교회 정보</h3></div>
+                <div class="info-items">
+                    <div class="info-item">
+                        <div class="label">주소</div>
+                        <div class="value">@Model.Address</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">전화</div>
+                        <div class="value">@Model.Phone</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">이메일</div>
+                        <div class="value">@Model.Email</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 교통편 -->
+            <div class="block">
+                <div class="block-head"><span class="bar"></span><h3>교통편</h3></div>
+                <div class="transport">
+                    @foreach (var item in Model.Transport.OrderBy(t => t.SortOrder))
+                    {
+                        <div class="trans-item">
+                            <div class="icon">@item.Icon</div>
+                            <div>
+                                <div class="t-title">@item.Title</div>
+                                <div class="t-body">@item.Body</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@ViewBag.KakaoMapApiKey"></script>
+    <script>
+        // 카카오 맵 초기화
+        (function() {
+            const lat = @(Model.Latitude?.ToString("F14", System.Globalization.CultureInfo.InvariantCulture) ?? "34.47583905316223");
+            const lng = @(Model.Longitude?.ToString("F14", System.Globalization.CultureInfo.InvariantCulture) ?? "126.47554034813862");
+
+            const container = document.getElementById('kakao-map');
+            const options = {
+                center: new kakao.maps.LatLng(lat, lng),
+                level: 3
+            };
+
+            const map = new kakao.maps.Map(container, options);
+
+            // 마커 추가
+            const markerPosition = new kakao.maps.LatLng(lat, lng);
+            const marker = new kakao.maps.Marker({
+                position: markerPosition
+            });
+            marker.setMap(map);
+
+            // 인포윈도우 추가
+            const infowindow = new kakao.maps.InfoWindow({
+                content: '<div style="padding:8px 12px;font-size:13px;white-space:nowrap">해남 안디옥 교회</div>'
+            });
+            infowindow.open(map, marker);
+        })();
+    </script>
+}

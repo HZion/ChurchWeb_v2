@@ -1,0 +1,106 @@
+@model ChurchWeb.Web.Models.Admin.BulletinFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "주보 등록" : "주보 수정";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>@ViewData["Title"]</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="/Admin/Bulletins">주보 관리</a></li>
+                    <li class="breadcrumb-item active">@(Model.Id == 0 ? "등록" : "수정")</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <form asp-action="Save" asp-controller="BulletinsAdmin" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger" role="alert">
+                <div asp-validation-summary="All" class="text-danger"></div>
+            </div>
+        }
+
+        <div class="row g-3">
+            <!-- 제목 -->
+            <div class="col-md-8">
+                <label asp-for="Title" class="form-label">제목 <span class="text-danger">*</span></label>
+                <input asp-for="Title" class="form-control" placeholder="주보 제목을 입력하세요" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <!-- 발행일 -->
+            <div class="col-md-4">
+                <label asp-for="PublishedDate" class="form-label">발행일 <span class="text-danger">*</span></label>
+                <input asp-for="PublishedDate" type="date" class="form-control" />
+                <span asp-validation-for="PublishedDate" class="text-danger"></span>
+            </div>
+
+            <!-- PDF 파일 업로드 -->
+            <div class="col-12">
+                <label asp-for="PdfFile" class="form-label">
+                    PDF 파일 @(Model.Id == 0 ? "<span class=\"text-danger\">*</span>" : "(변경 시에만 업로드)")
+                </label>
+                <input asp-for="PdfFile" type="file" class="form-control" accept="application/pdf" />
+                <span asp-validation-for="PdfFile" class="text-danger"></span>
+                <small class="form-text text-muted">PDF 파일만 업로드 가능합니다. 최대 크기: 10MB</small>
+
+                @if (Model.Id > 0 && !string.IsNullOrEmpty(Model.ExistingFileName))
+                {
+                    <div class="mt-2">
+                        <strong>현재 파일:</strong>
+                        <a href="/Admin/Bulletins/Download/@Model.Id" class="text-decoration-none">
+                            <i class="bi bi-file-pdf"></i> @Model.ExistingFileName
+                        </a>
+                        <span class="text-muted">
+                            (@(Model.ExistingFileSize < 1024 * 1024
+                                ? $"{Model.ExistingFileSize / 1024.0:F1} KB"
+                                : $"{Model.ExistingFileSize / (1024.0 * 1024.0):F1} MB"))
+                        </span>
+                    </div>
+                }
+            </div>
+
+            <!-- 순서 -->
+            <div class="col-md-6">
+                <label asp-for="SortOrder" class="form-label">순서</label>
+                <input asp-for="SortOrder" type="number" class="form-control" min="0" />
+                <span asp-validation-for="SortOrder" class="text-danger"></span>
+                <small class="form-text text-muted">0이면 자동 설정</small>
+            </div>
+
+            <!-- 표시 여부 -->
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input asp-for="IsVisible" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsVisible" class="form-check-label">공개 사이트에 표시</label>
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <a href="/Admin/Bulletins" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Id == 0 ? "등록" : "수정")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

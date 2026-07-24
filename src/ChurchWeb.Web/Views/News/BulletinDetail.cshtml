@@ -1,0 +1,105 @@
+@model ChurchWeb.Web.Models.News.BulletinDetailVm
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 소식 &nbsp;›&nbsp; <b>주보</b>", Model.Title, Model.RegDate)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "bulletins")' />
+
+<main class="content bulletin-detail">
+    <div class="container">
+
+        <!-- 주보 뷰어 -->
+        <div class="bulletin-viewer">
+            <!-- 좌측: 페이지 썸네일 -->
+            <div class="thumbnails">
+                @for (int i = 0; i < Model.PageImages.Count; i++)
+                {
+                    <div class="thumb @(i == 0 ? "active" : "")" data-page="@i">
+                        <div class="thumb-img" style="background-image: url('@Model.PageImages[i]');"></div>
+                        <div class="thumb-num">@(i + 1)</div>
+                    </div>
+                }
+            </div>
+
+            <!-- 우측: 선택된 페이지 뷰어 -->
+            <div class="viewer">
+                <div class="viewer-header">
+                    <h2>@Model.Title</h2>
+                    <div class="actions">
+                        <a href="@Model.FileUrl" class="btn-download" download>PDF 다운로드</a>
+                    </div>
+                </div>
+                <div class="viewer-body">
+                    @foreach (var (img, idx) in Model.PageImages.Select((img, idx) => (img, idx)))
+                    {
+                        <div class="page @(idx == 0 ? "active" : "")" data-page="@idx">
+                            <img src="@img" alt="Page @(idx + 1)" />
+                        </div>
+                    }
+                </div>
+                <div class="viewer-footer">
+                    <span class="page-info">
+                        <span class="current">1</span> / @Model.PageImages.Count
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 이전/다음 네비게이션 -->
+        <div class="nav-items">
+            @if (Model.Prev != null)
+            {
+                <a href="/news/bulletins/@Model.Prev.Id" class="nav-prev">
+                    <div class="label">‹ 이전 주보</div>
+                    <div class="title">@Model.Prev.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-prev disabled"></div>
+            }
+
+            @if (Model.Next != null)
+            {
+                <a href="/news/bulletins/@Model.Next.Id" class="nav-next">
+                    <div class="label">다음 주보 ›</div>
+                    <div class="title">@Model.Next.Title</div>
+                </a>
+            }
+            else
+            {
+                <div class="nav-next disabled"></div>
+            }
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        // 주보 페이지 썸네일 클릭 시 뷰어 전환
+        document.addEventListener('DOMContentLoaded', function() {
+            const thumbs = document.querySelectorAll('.thumb');
+            const pages = document.querySelectorAll('.viewer .page');
+            const pageInfo = document.querySelector('.page-info .current');
+
+            thumbs.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    const pageNum = parseInt(this.getAttribute('data-page'));
+
+                    // 썸네일 active 전환
+                    thumbs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // 페이지 active 전환
+                    pages.forEach(p => p.classList.remove('active'));
+                    pages[pageNum].classList.add('active');
+
+                    // 페이지 번호 업데이트
+                    pageInfo.textContent = pageNum + 1;
+                });
+            });
+        });
+    </script>
+}

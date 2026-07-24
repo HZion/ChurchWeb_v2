@@ -1,0 +1,81 @@
+@model ChurchWeb.Web.Models.Worship.SermonListVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+    var currentTab = Model.Tabs.FirstOrDefault(t => t.Url.Contains(ViewContext.RouteData.Values["action"]?.ToString()?.ToLower() ?? "sunday"));
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 말씀과 찬양 &nbsp;›&nbsp; <b>{Model.PageTitle}</b>", Model.PageTitle, Model.PageSubtitle)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs.Where(t => t.IsVisible).OrderBy(t => t.SortOrder), currentTab?.Key ?? "sunday")' />
+
+<main class="content">
+    <div class="container">
+
+        @if (Model.Sermons.Count == 0)
+        {
+            <!-- 빈 상태 -->
+            <div class="empty-state">
+                <div class="empty-icon">🎬</div>
+                <h3>아직 등록된 설교 영상이 없습니다</h3>
+                <p>곧 업데이트될 예정입니다. 조금만 기다려주세요.</p>
+            </div>
+        }
+        else
+        {
+            <!-- 툴바 (총 편수 + 검색) -->
+            <div class="toolbar">
+                <div class="count">총 <b>@(Model.TotalCount)</b>편</div>
+                <div class="search-box">
+                    <form method="get">
+                        <input type="text" name="search" placeholder="제목 또는 본문 검색..." value="@Model.SearchQuery" />
+                        <button type="submit">🔍</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 설교 카드 그리드 -->
+            <div class="sermon-grid">
+                @foreach (var sermon in Model.Sermons)
+                {
+                    <a href="/sermons/@sermon.Id" class="sermon-card">
+                        <div class="thumb">
+                            <div class="thumb-img" style="background-image: url('@sermon.ThumbUrl')"></div>
+                            <div class="play-btn">▶</div>
+                            <div class="duration">@sermon.Duration</div>
+                        </div>
+                        <div class="info">
+                            <div class="cat-badge">@(sermon.Category == "sunday" ? "주일 설교" : "특별 설교")</div>
+                            <div class="verse">@sermon.Verse</div>
+                            <div class="title">@sermon.Title</div>
+                            <div class="meta">
+                                <span class="preacher">@sermon.Preacher</span>
+                                <span class="sep">·</span>
+                                <span class="date">@sermon.Date</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <!-- 페이지네이션 -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @if (Model.Page > 1)
+                    {
+                        <a href="?page=@(Model.Page - 1)@(string.IsNullOrWhiteSpace(Model.SearchQuery) ? "" : $"&search={Model.SearchQuery}")" class="page-link">‹ 이전</a>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <a href="?page=@i@(string.IsNullOrWhiteSpace(Model.SearchQuery) ? "" : $"&search={Model.SearchQuery}")"
+                           class="page-link @(i == Model.Page ? "active" : "")">@i</a>
+                    }
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="?page=@(Model.Page + 1)@(string.IsNullOrWhiteSpace(Model.SearchQuery) ? "" : $"&search={Model.SearchQuery}")" class="page-link">다음 ›</a>
+                    }
+                </div>
+            }
+        }
+
+    </div>
+</main>

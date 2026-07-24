@@ -1,0 +1,46 @@
+@model ChurchWeb.Web.Models.Home.QuickVm
+
+<section class="section bg-alt" id="quick">
+    <div class="container">
+        <div class="quick">
+            @* 교회소개 *@
+            <div class="qcard">
+                <h3>@Model.About.Title</h3>
+                <p>@Model.About.Description</p>
+                <a href="@Model.About.LinkUrl" class="go">바로가기 →</a>
+            </div>
+
+            @* 이번주 주보 *@
+            <div class="qcard bulletin">
+                <div>
+                    <h3>@Model.Bulletin.Title</h3>
+                    <p>@Model.Bulletin.Description</p>
+                    <div class="btns">
+                        <a href="@Model.Bulletin.ViewUrl" class="btn btn-primary">주보 보기</a>
+                        <a href="@Model.Bulletin.DownloadUrl" class="btn btn-ghost">다운로드</a>
+                    </div>
+                </div>
+                <div class="bull-thumb">주보<br>이미지</div>
+            </div>
+
+            @* 하단 3개 카드 *@
+            <div class="row3">
+                <div class="qcard">
+                    <h3>@Model.Worship.Title</h3>
+                    <p>@Model.Worship.Description</p>
+                    <a href="@Model.Worship.LinkUrl" class="go">바로가기 →</a>
+                </div>
+                <div class="qcard">
+                    <h3>@Model.Sermons.Title</h3>
+                    <p>@Model.Sermons.Description</p>
+                    <a href="@Model.Sermons.LinkUrl" class="go">바로가기 →</a>
+                </div>
+                <div class="qcard">
+                    <h3>@Model.Location.Title</h3>
+                    <p>@Model.Location.Description</p>
+                    <a href="@Model.Location.LinkUrl" class="go">바로가기 →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

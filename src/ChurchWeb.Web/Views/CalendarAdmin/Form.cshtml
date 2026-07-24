@@ -1,0 +1,103 @@
+@model ChurchWeb.Web.Models.Admin.CalendarEventFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "일정 등록" : "일정 수정";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>@ViewData["Title"]</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="/Admin/Calendar">교회일정 관리</a></li>
+                    <li class="breadcrumb-item active">@(Model.Id == 0 ? "등록" : "수정")</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="admin-card">
+            <h5 class="card-title mb-3">일정 정보</h5>
+            <form asp-action="Save" asp-controller="CalendarAdmin" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">일정 제목 <span class="text-danger">*</span></label>
+                    <input asp-for="Title" class="form-control" placeholder="일정 제목을 입력하세요" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EventDate" class="form-label">일정 날짜 <span class="text-danger">*</span></label>
+                        <input asp-for="EventDate" type="date" class="form-control" />
+                        <span asp-validation-for="EventDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Time" class="form-label">시간</label>
+                        <input asp-for="Time" class="form-control" placeholder="예: 14:00, 오후 2시" />
+                        <span asp-validation-for="Time" class="text-danger"></span>
+                        <small class="form-text text-muted">선택사항</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="EventType" class="form-label">일정 유형 <span class="text-danger">*</span></label>
+                    <select asp-for="EventType" class="form-select">
+                        <option value="worship">예배</option>
+                        <option value="event">행사</option>
+                    </select>
+                    <span asp-validation-for="EventType" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">설명</label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="일정에 대한 설명을 입력하세요"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="SortOrder" class="form-label">순서</label>
+                        <input asp-for="SortOrder" type="number" class="form-control" min="0" />
+                        <span asp-validation-for="SortOrder" class="text-danger"></span>
+                        <small class="form-text text-muted">0이면 자동 설정</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch mt-4">
+                            <input asp-for="IsVisible" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsVisible" class="form-check-label">공개 사이트에 표시</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/Admin/Calendar" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Id == 0 ? "등록" : "저장")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

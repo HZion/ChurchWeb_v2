@@ -1,0 +1,157 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject IWebHostEnvironment Environment
+@inject ILogger<ImageUploader> Logger
+@inject IJSRuntime JS
+
+<div class="image-uploader">
+    @if (!string.IsNullOrEmpty(ImageUrl))
+    {
+        <div class="image-preview">
+            <img src="@ImageUrl" alt="Preview" />
+            <button type="button" class="btn-remove" @onclick="RemoveImage">×</button>
+        </div>
+    }
+
+    <div class="upload-controls">
+        <InputFile OnChange="HandleFileSelected" accept="image/*" class="file-input" id="@inputId" />
+        <label for="@inputId" class="btn @(string.IsNullOrEmpty(ImageUrl) ? "primary" : "ghost")">
+            @(string.IsNullOrEmpty(ImageUrl) ? "이미지 선택" : "이미지 변경")
+        </label>
+
+        @if (isUploading)
+        {
+            <span class="upload-status">업로드 중...</span>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="text-danger">@errorMessage</div>
+        }
+    </div>
+</div>
+
+<style>
+.image-uploader {
+    margin: 10px 0;
+}
+.image-preview {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+.image-preview img {
+    max-width: 300px;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+}
+.image-preview .btn-remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--red);
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.upload-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.file-input {
+    display: none;
+}
+.upload-status {
+    font-size: 13px;
+    color: var(--muted);
+}
+</style>
+
+@code {
+    [Parameter]
+    public string? ImageUrl { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ImageUrlChanged { get; set; }
+
+    private string inputId = Guid.NewGuid().ToString();
+    private bool isUploading = false;
+    private string? errorMessage;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        errorMessage = null;
+        isUploading = true;
+
+        try
+        {
+            var file = e.File;
+            var maxFileSize = 5 * 1024 * 1024; // 5MB
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+
+            // 파일 크기 체크
+            if (file.Size > maxFileSize)
+            {
+                errorMessage = "파일 크기는 5MB를 초과할 수 없습니다.";
+                return;
+            }
+
+            // 확장자 검증
+            var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                errorMessage = "허용되지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)";
+                return;
+            }
+
+            // 업로드 폴더 확인 및 생성
+            var uploadPath = Path.Combine(Environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            // 고유 파일명 생성
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // 파일 저장
+            using (var fileStream = file.OpenReadStream(maxAllowedSize: maxFileSize))
+            using (var fs = new FileStream(filePath, FileMode.Create))
+            {
+                await fileStream.CopyToAsync(fs);
+            }
+
+            // URL 설정
+            var fileUrl = $"/uploads/{fileName}";
+            Logger.LogInformation("Image uploaded successfully: {FileUrl}", fileUrl);
+
+            ImageUrl = fileUrl;
+            await ImageUrlChanged.InvokeAsync(ImageUrl);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error uploading image");
+            errorMessage = $"오류: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private async Task RemoveImage()
+    {
+        ImageUrl = null;
+        await ImageUrlChanged.InvokeAsync(ImageUrl);
+    }
+
+}

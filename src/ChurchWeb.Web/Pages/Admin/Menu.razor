@@ -1,0 +1,15 @@
+@page "/Admin/Blazor/menu"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@layout AdminLayout
+
+<div class="topbar">
+    <div class="crumb">관리자 · <b>메뉴 노출 관리</b></div>
+    <div class="spacer"></div>
+    <a href="/" class="btn ghost" target="_blank">사이트 미리보기 ↗</a>
+</div>
+
+<div class="content">
+    <MenuManagementSection />
+</div>

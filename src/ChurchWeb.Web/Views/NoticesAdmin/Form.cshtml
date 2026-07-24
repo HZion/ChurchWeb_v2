@@ -1,0 +1,227 @@
+@model ChurchWeb.Web.Models.Admin.NoticeFormViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "소식 등록" : "소식 수정";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>@ViewData["Title"]</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Admin">대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="/Admin/Notices">교회 소식 관리</a></li>
+                    <li class="breadcrumb-item active">@(Model.Id == 0 ? "등록" : "수정")</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 소식 기본 정보 -->
+    <div class="col-md-8">
+        <div class="admin-card">
+            <h5 class="card-title mb-3">소식 정보</h5>
+            <form asp-action="Save" asp-controller="NoticesAdmin" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                    </div>
+                }
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="CategoryKey" class="form-label">카테고리 <span class="text-danger">*</span></label>
+                        <select asp-for="CategoryKey" class="form-select">
+                            <option value="church">교회소식</option>
+                            <option value="member">교우소식</option>
+                        </select>
+                        <span asp-validation-for="CategoryKey" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PostedOn" class="form-label">작성일 <span class="text-danger">*</span></label>
+                        <input asp-for="PostedOn" type="date" class="form-control" />
+                        <span asp-validation-for="PostedOn" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">제목 <span class="text-danger">*</span></label>
+                    <input asp-for="Title" class="form-control" placeholder="제목을 입력하세요" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Author" class="form-label">작성자 <span class="text-danger">*</span></label>
+                    <input asp-for="Author" class="form-control" placeholder="작성자를 입력하세요" />
+                    <span asp-validation-for="Author" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="BodyHtml" class="form-label">내용 <span class="text-danger">*</span></label>
+                    <textarea asp-for="BodyHtml" id="bodyHtmlEditor" class="form-control" rows="15"></textarea>
+                    <span asp-validation-for="BodyHtml" class="text-danger"></span>
+                    <small class="form-text text-muted">HTML 형식으로 입력하세요.</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="SortOrder" class="form-label">순서</label>
+                        <input asp-for="SortOrder" type="number" class="form-control" min="0" />
+                        <span asp-validation-for="SortOrder" class="text-danger"></span>
+                        <small class="form-text text-muted">0이면 자동 설정</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check form-switch mt-4">
+                            <input asp-for="IsPinned" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsPinned" class="form-check-label">필독으로 표시</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check form-switch mt-4">
+                            <input asp-for="IsVisible" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsVisible" class="form-check-label">공개 사이트에 표시</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/Admin/Notices" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Id == 0 ? "등록" : "저장")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 첨부파일 관리 (수정 모드에서만 표시) -->
+    @if (Model.Id > 0)
+    {
+        <div class="col-md-4">
+            <div class="admin-card">
+                <h5 class="card-title mb-3">첨부파일 (@Model.Attachments.Count 개)</h5>
+
+                <!-- 파일 업로드 폼 -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">파일 추가</h6>
+                        <form id="attachmentUploadForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="NoticeId" value="@Model.Id" />
+
+                            <div class="mb-2">
+                                <input type="file" name="AttachmentFile" id="attachmentFile" class="form-control form-control-sm" required />
+                                <small class="form-text text-muted">최대 50MB</small>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="bi bi-upload"></i> 업로드
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 첨부파일 목록 -->
+                <div id="attachmentList">
+                    @if (Model.Attachments.Count == 0)
+                    {
+                        <div class="alert alert-info">
+                            첨부파일이 없습니다.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group">
+                            @foreach (var attachment in Model.Attachments.OrderBy(a => a.SortOrder))
+                            {
+                                <div class="list-group-item attachment-item" data-attachment-id="@attachment.Id">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <i class="bi bi-paperclip"></i>
+                                            <a href="@attachment.FileUrl" target="_blank" class="text-decoration-none">
+                                                @attachment.FileName
+                                            </a>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAttachment(@attachment.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    @if (Model.Id > 0)
+    {
+        <script>
+            // 첨부파일 업로드
+            document.getElementById('attachmentUploadForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                try {
+                    const response = await fetch('/Admin/Notices/UploadAttachment', {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    alert('업로드 중 오류가 발생했습니다.');
+                }
+            });
+
+            // 첨부파일 삭제
+            async function deleteAttachment(attachmentId) {
+                if (!confirm('이 첨부파일을 삭제하시겠습니까?')) return;
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                try {
+                    const response = await fetch(`/Admin/Notices/DeleteAttachment/${attachmentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            }
+        </script>
+    }
+}

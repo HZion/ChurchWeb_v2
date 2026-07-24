@@ -1,0 +1,79 @@
+@model ChurchWeb.Web.Models.About.AboutWorshipVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<!-- 페이지 배너 -->
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 교회소개 &nbsp;›&nbsp; <b>{Model.PageTitle}</b>", Model.PageTitle, Model.PageSubtitle)' />
+
+<!-- 서브 탭 -->
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "worship")' />
+
+<!-- 본문 -->
+<main class="content">
+    <div class="container">
+
+        <!-- 인트로 -->
+        <div class="intro">
+            <div class="ey">@Model.IntroEyebrow</div>
+            <h2>@Model.IntroTitle</h2>
+            <p>@Model.IntroText</p>
+        </div>
+
+        <!-- 예배 블록들 (데이터 기반) -->
+        @foreach (var block in Model.Blocks.Where(b => b.IsVisible).OrderBy(b => b.SortOrder))
+        {
+            <div class="block">
+                <div class="block-head"><span class="bar"></span><h3>@block.Title</h3></div>
+                <div class="table-wrap">
+                    <table class="sched">
+                        <thead>
+                            <tr>
+                                <th>예배</th>
+                                <th>시간</th>
+                                <th>장소</th>
+                                @if (block.Rows.Any(r => !string.IsNullOrEmpty(r.Note)))
+                                {
+                                    <th>안내</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in block.Rows.OrderBy(r => r.SortOrder))
+                            {
+                                <tr>
+                                    <td class="name">
+                                        @row.Name
+                                        @if (!string.IsNullOrEmpty(row.Note) && row.Note.Contains("실시간"))
+                                        {
+                                            <span class="badge-live">LIVE</span>
+                                        }
+                                    </td>
+                                    <td class="time">@row.Time</td>
+                                    <td>@row.Place</td>
+                                    @if (block.Rows.Any(r => !string.IsNullOrEmpty(r.Note)))
+                                    {
+                                        <td>@row.Note</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- 온라인 예배 안내 (조건부 표시) -->
+        @if (Model.OnlineVisible)
+        {
+            <div class="online">
+                <div>
+                    <h3>@Model.OnlineTitle</h3>
+                    <p>@Model.OnlineText</p>
+                </div>
+                <a href="@Model.OnlineUrl" class="btn" target="_blank">유튜브 채널 바로가기</a>
+            </div>
+        }
+
+    </div>
+</main>

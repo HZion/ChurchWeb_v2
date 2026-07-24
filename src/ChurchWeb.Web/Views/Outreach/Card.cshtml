@@ -1,0 +1,545 @@
+@model ChurchWeb.Web.Models.Outreach.OutreachCardVm
+@{
+    Layout = "_OutreachLayout";
+    ViewData["Title"] = $"{Model.ChurchName} - {Model.EvangelistName}";
+
+    string GetYouTubeVideoId(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return "";
+
+        string videoId = "";
+        if (url.Contains("/embed/"))
+        {
+            var parts = url.Split("/embed/");
+            if (parts.Length > 1) videoId = parts[1].Split('?')[0];
+        }
+        else if (url.Contains("youtu.be/"))
+        {
+            videoId = url.Split("youtu.be/")[1].Split('?')[0];
+        }
+        else if (url.Contains("youtube.com/watch"))
+        {
+            var uri = new Uri(url);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            videoId = query["v"];
+        }
+
+        return videoId;
+    }
+
+    var videoId = GetYouTubeVideoId(Model.PromoVideoUrl);
+    var embedUrl = !string.IsNullOrEmpty(videoId) ? $"https://www.youtube.com/embed/{videoId}" : "";
+    var thumbnailUrl = !string.IsNullOrEmpty(videoId) ? $"https://img.youtube.com/vi/{videoId}/maxresdefault.jpg" : "";
+    var logoInitial = !string.IsNullOrEmpty(Model.ChurchName) ? Model.ChurchName.Substring(0, 1) : "安";
+}
+
+<style>
+/* 전도자 히어로 카드 (에스프레소 배경) */
+.hero {
+    margin: 8px 16px 0;
+    background: linear-gradient(155deg, #33261b, #241a12);
+    border-radius: 20px;
+    padding: 24px 22px;
+    color: #efe4d3;
+    position: relative;
+    overflow: hidden;
+}
+.hero::after {
+    content: '✝';
+    position: absolute;
+    right: -6px;
+    top: -10px;
+    font-size: 90px;
+    color: rgba(203, 176, 122, .10);
+}
+.hero .top {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.hero .photo {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid var(--gold-soft);
+    background: #efe4d3 center/cover;
+}
+.hero .who h2 {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: #fff;
+}
+.hero .who h2 em {
+    font-style: normal;
+    font-size: 13px;
+    color: var(--gold-soft);
+    margin-left: 7px;
+}
+.hero .who .tel {
+    font-size: 13px;
+    color: #d7c9b3;
+    margin-top: 5px;
+    letter-spacing: .02em;
+}
+.hero .acts {
+    display: flex;
+    gap: 9px;
+    margin-top: 16px;
+}
+.hero .acts a {
+    flex: 1;
+    text-align: center;
+    padding: 11px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+.hero .acts .call {
+    background: var(--gold);
+    color: #241a10;
+}
+.hero .acts .sms {
+    background: rgba(255, 255, 255, .10);
+    color: #efe4d3;
+    border: 1px solid rgba(255, 255, 255, .18);
+}
+.hero .greet {
+    margin-top: 16px;
+    background: rgba(0, 0, 0, .22);
+    border: 1px solid rgba(203, 176, 122, .22);
+    border-radius: 11px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: #e4d8c4;
+    line-height: 1.7;
+    text-align: center;
+}
+
+/* 교회 정보 행들 */
+.info {
+    margin: 18px 16px 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.irow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+}
+.irow + .irow {
+    border-top: 1px solid var(--line);
+}
+.irow .lab {
+    font-size: 11px;
+    color: var(--muted);
+}
+.irow .val {
+    font-size: 13px;
+    color: var(--espresso);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+.irow .grow {
+    flex: 1;
+    min-width: 0;
+}
+.irow .act {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--beige);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    text-decoration: none;
+    cursor: pointer;
+}
+.irow .copy {
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 9px;
+    background: var(--cream);
+    cursor: pointer;
+}
+
+/* 지도 */
+.map {
+    margin: 14px 16px 0;
+    height: 150px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    position: relative;
+}
+
+/* 섹션 */
+.sec {
+    padding: 26px 16px 0;
+}
+.sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 0 4px;
+}
+.sec-head h3 {
+    font-family: var(--serif);
+    font-size: 17px;
+    color: var(--espresso);
+}
+.sec-head a {
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+/* 퀵 메뉴 타일 */
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 9px;
+}
+.tiles a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 4px;
+    text-decoration: none;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    color: var(--espresso);
+}
+.tiles .ti {
+    font-size: 20px;
+}
+.tiles b {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* 홍보 영상 */
+.vcard {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.vcard .vthumb {
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #2b2119, #3c2e21) center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cbb07a;
+    position: relative;
+    cursor: pointer;
+}
+.vcard .vthumb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .3);
+    opacity: 0;
+    transition: opacity .2s;
+}
+.vcard .vthumb:hover::before {
+    opacity: 1;
+}
+.vcard .vthumb .play-btn {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    background: rgba(203, 176, 122, .92);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #241a10;
+    transition: transform .2s, background .2s;
+    z-index: 1;
+}
+.vcard .vthumb:hover .play-btn {
+    transform: scale(1.1);
+    background: var(--gold);
+}
+.vcard .vthumb iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+.vcard .vt {
+    font-size: 12px;
+    color: var(--espresso);
+    margin: 10px;
+    text-align: center;
+}
+
+/* 주보 리스트 */
+.blist {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.brow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+}
+.brow + .brow {
+    border-top: 1px solid var(--line);
+}
+.brow .bt {
+    font-size: 13px;
+    color: var(--espresso);
+}
+.brow .bt::before {
+    content: '▪';
+    color: var(--gold-soft);
+    margin-right: 8px;
+}
+.brow .bv {
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 11px;
+    background: var(--cream);
+    text-decoration: none;
+}
+
+/* 갤러리 */
+.ggrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+}
+.gitem {
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--paper);
+    border: 1px solid var(--line);
+}
+.gitem .gimg {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #e8dcc7, #d8c8ab) center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a2917a;
+    font-size: 11px;
+}
+.gitem .gcap {
+    font-size: 11.5px;
+    color: var(--ink);
+    text-align: center;
+    padding: 9px 6px;
+}
+</style>
+
+<!-- 브랜드 바 -->
+<div class="brand">
+    <div class="logo">@logoInitial</div>
+    <div>
+        <b>@Model.ChurchName</b>
+        <span>@Model.Denomination</span>
+    </div>
+</div>
+
+<!-- 전도자 히어로 -->
+<div class="hero">
+    <div class="top">
+        <div class="photo" style="background-image: url('@(string.IsNullOrEmpty(Model.EvangelistPhotoUrl) ? "/images/placeholder-person.png" : Model.EvangelistPhotoUrl)')"></div>
+        <div class="who">
+            <h2>@Model.EvangelistName <em>@Model.EvangelistTitle</em></h2>
+            <div class="tel">@Model.EvangelistPhone</div>
+        </div>
+    </div>
+    <div class="acts">
+        <a class="call" href="tel:@Model.EvangelistPhone.Replace("-", "")">전화 하기</a>
+        <a class="sms" href="sms:@Model.EvangelistPhone.Replace("-", "")">문자 보내기</a>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.EvangelistGreeting))
+    {
+        <div class="greet">@Model.EvangelistGreeting</div>
+    }
+</div>
+
+<!-- 교회 정보 -->
+<div class="info">
+    <div class="irow">
+        <div class="grow">
+            <div class="lab">교회주소</div>
+            <div class="val">@Model.ChurchAddress</div>
+        </div>
+        <span class="copy" onclick="copyAddress()">주소복사</span>
+    </div>
+    <div class="irow">
+        <div class="grow">
+            <div class="lab">교회전화</div>
+            <div class="val">@Model.ChurchPhone</div>
+        </div>
+        <a class="act" href="tel:@Model.ChurchPhone.Replace("-", "")">☎</a>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.HomepageUrl))
+    {
+        <div class="irow">
+            <div class="grow">
+                <div class="lab">홈페이지</div>
+                <div class="val">@Model.HomepageUrl</div>
+            </div>
+            <a class="act" href="@Model.HomepageUrl" target="_blank">🌐</a>
+        </div>
+    }
+</div>
+
+<!-- 지도 -->
+@if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+{
+    <div class="map" id="map"></div>
+}
+else
+{
+    <div style="margin: 14px 16px; padding: 20px; background: #f5f5f5; border-radius: 16px; text-align: center; color: #666;">
+        <small>지도 정보가 없습니다. (위도: @(Model.Latitude?.ToString() ?? "없음"), 경도: @(Model.Longitude?.ToString() ?? "없음"))</small>
+    </div>
+}
+
+<!-- 퀵 메뉴 -->
+<div class="sec">
+    <div class="tiles">
+        <a href="/About/Vision"><span class="ti">📖</span><b>사명과비전</b></a>
+        <a href="/About/Worship"><span class="ti">🕯️</span><b>예배안내</b></a>
+        <a href="/about/people"><span class="ti">🙏</span><b>섬기는분</b></a>
+        <a href="/news/notices"><span class="ti">📢</span><b>교회소식</b></a>
+    </div>
+</div>
+
+<!-- 홍보 영상 -->
+@if (!string.IsNullOrEmpty(videoId))
+{
+    <div class="sec">
+        <div class="sec-head"><h3>홍보 영상</h3></div>
+        <div class="vcard">
+            <div class="vthumb" id="videoThumb" style="background-image: url('@thumbnailUrl')" onclick="loadVideo()">
+                <div class="play-btn">▶</div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 교회 주보 -->
+@if (Model.Bulletins.Any())
+{
+    <div class="sec">
+        <div class="sec-head"><h3>교회 주보</h3></div>
+        <div class="blist">
+            @foreach (var bulletin in Model.Bulletins)
+            {
+                <div class="brow">
+                    <span class="bt">@bulletin.Title</span>
+                    <a class="bv" href="/news/bulletins/@bulletin.Id">보기</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- 갤러리 -->
+@if (Model.Albums.Any())
+{
+    <div class="sec">
+        <div class="sec-head">
+            <h3>교회 갤러리</h3>
+            <a href="/news/gallery">더보기 +</a>
+        </div>
+        <div class="ggrid">
+            @foreach (var album in Model.Albums)
+            {
+                <div class="gitem">
+                    @if (!string.IsNullOrEmpty(album.CoverImageUrl))
+                    {
+                        <div class="gimg" style="background-image: url('@album.CoverImageUrl')"></div>
+                    }
+                    else
+                    {
+                        <div class="gimg">사진</div>
+                    }
+                    <div class="gcap">@album.Title</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- 푸터 -->
+<footer class="foot">
+    <div class="fname">@Model.ChurchName</div>
+    <div class="fc">
+        @Model.ChurchAddress<br>
+        COPYRIGHT © @Model.ChurchName ALL RIGHTS RESERVED.
+    </div>
+</footer>
+
+@section Scripts {
+    @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+    {
+        <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@ViewBag.KakaoMapApiKey"></script>
+        <script>
+            const container = document.getElementById('map');
+            const options = {
+                center: new kakao.maps.LatLng(@Model.Latitude.Value.ToString("F14", System.Globalization.CultureInfo.InvariantCulture), @Model.Longitude.Value.ToString("F14", System.Globalization.CultureInfo.InvariantCulture)),
+                level: 3
+            };
+            const map = new kakao.maps.Map(container, options);
+
+            const markerPosition = new kakao.maps.LatLng(@Model.Latitude.Value.ToString("F14", System.Globalization.CultureInfo.InvariantCulture), @Model.Longitude.Value.ToString("F14", System.Globalization.CultureInfo.InvariantCulture));
+            const marker = new kakao.maps.Marker({
+                position: markerPosition
+            });
+            marker.setMap(map);
+
+            const infowindow = new kakao.maps.InfoWindow({
+                content: '<div style="padding:5px;font-size:12px;">@Model.ChurchName</div>'
+            });
+            infowindow.open(map, marker);
+        </script>
+    }
+
+    <script>
+        function copyAddress() {
+            const address = '@Model.ChurchAddress';
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(address).then(() => {
+                    alert('주소가 복사되었습니다!');
+                });
+            } else {
+                alert('주소 복사를 지원하지 않는 브라우저입니다.');
+            }
+        }
+
+        function loadVideo() {
+            const thumb = document.getElementById('videoThumb');
+            const embedUrl = '@embedUrl';
+            thumb.innerHTML = `<iframe src="${embedUrl}" title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        }
+    </script>
+}

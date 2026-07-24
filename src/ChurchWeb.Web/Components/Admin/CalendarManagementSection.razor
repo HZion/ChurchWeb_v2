@@ -1,0 +1,340 @@
+@using ChurchWeb.Core.Entities.News
+@using ChurchWeb.Infrastructure.Services
+@using ChurchWeb.Web.Components.Shared
+@inject ICalendarAdminService CalendarService
+@inject ILogger<CalendarManagementSection> Logger
+@inject IJSRuntime JS
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">교회일정 관리</h2>
+        <p>교회의 주요 일정을 등록하고 관리합니다.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error">
+            @errorMessage
+        </div>
+    }
+
+    <!-- 달력 및 일정 목록 -->
+    <div class="card">
+        <div class="card-head">
+            <h3>@($"{currentYear}년 {currentMonth}월")</h3>
+            <div style="display:flex;gap:8px">
+                <button class="btn ghost sm" @onclick="PreviousMonth">← 이전</button>
+                <button class="btn ghost sm" @onclick="NextMonth">다음 →</button>
+                <button class="btn primary" @onclick="AddNewEvent">＋ 일정 추가</button>
+            </div>
+        </div>
+
+        <div class="sub">일정을 선택하여 수정하거나 삭제할 수 있습니다.</div>
+
+        <div class="info-strip">
+            ⓘ 예배(worship)는 파란색, 행사(event)는 초록색으로 표시됩니다.
+        </div>
+
+        <!-- 일정 목록 (월별) -->
+        @if (monthEvents.Any())
+        {
+            <table class="table" style="margin-top:16px">
+                <thead>
+                    <tr>
+                        <th style="width:120px">날짜</th>
+                        <th style="width:100px">유형</th>
+                        <th>제목</th>
+                        <th style="width:120px">시간</th>
+                        <th style="width:90px">노출</th>
+                        <th style="width:96px">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var evt in monthEvents.OrderBy(e => e.EventDate))
+                    {
+                        <tr>
+                            <td>@evt.EventDate.ToString("MM/dd (ddd)", new System.Globalization.CultureInfo("ko-KR"))</td>
+                            <td>
+                                <span class="tag @(evt.EventType == "worship" ? "blue" : "green")">
+                                    @(evt.EventType == "worship" ? "예배" : "행사")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="pname">@evt.Title</div>
+                                @if (!string.IsNullOrEmpty(evt.Description))
+                                {
+                                    <div class="pdept">@evt.Description</div>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(evt.Time))
+                                {
+                                    <span>@evt.Time</span>
+                                }
+                                else
+                                {
+                                    <span class="hint">시간 미정</span>
+                                }
+                            </td>
+                            <td>
+                                <label class="toggle">
+                                    <input type="checkbox" checked="@evt.IsVisible" @onchange="@(e => ToggleVisibility(evt, (bool)e.Value!))" />
+                                    <span class="tr"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="rowacts">
+                                    <button class="icon-btn" @onclick="@(() => EditEvent(evt))"><Icon Name="pencil" /></button>
+                                    <button class="icon-btn danger" @onclick="@(() => DeleteEvent(evt))"><Icon Name="trash" /></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state">
+                <p>이번 달에 등록된 일정이 없습니다.</p>
+            </div>
+        }
+    </div>
+
+    <!-- 추가/수정 폼 -->
+    @if (editingEvent != null)
+    {
+        <div class="card">
+            <h3>@(editingEvent.Id == 0 ? "일정 추가" : "일정 수정")</h3>
+            <div class="sub">정보를 입력하고 저장하세요.</div>
+
+            <EditForm Model="@editingEvent" OnValidSubmit="SaveEvent">
+                <div class="grid g3" style="margin-bottom:14px">
+                    <div class="field">
+                        <label>날짜</label>
+                        <InputDate @bind-Value="editingEvent.EventDate" />
+                    </div>
+                    <div class="field">
+                        <label>시간 (선택)</label>
+                        <InputText @bind-Value="editingEvent.Time" placeholder="예: 오전 10:00" />
+                    </div>
+                    <div class="field">
+                        <label>유형</label>
+                        <InputSelect @bind-Value="editingEvent.EventType">
+                            <option value="event">행사</option>
+                            <option value="worship">예배</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom:14px">
+                    <label>제목</label>
+                    <InputText @bind-Value="editingEvent.Title" placeholder="예: 부활절 연합예배" />
+                </div>
+
+                <div class="field" style="margin-bottom:14px">
+                    <label>설명 (선택)</label>
+                    <InputTextArea @bind-Value="editingEvent.Description" rows="2" placeholder="일정에 대한 간단한 설명..." />
+                </div>
+
+                <div class="field" style="margin-bottom:14px">
+                    <label>
+                        <input type="checkbox" @bind="editingEvent.IsVisible" style="margin-right:6px" />
+                        공개 페이지에 노출
+                    </label>
+                </div>
+
+                <div class="flex-end">
+                    <button type="button" class="btn ghost" @onclick="CancelEdit"><Icon Name="x" /> 취소</button>
+                    <button type="submit" class="btn primary"><Icon Name="save" /> 저장하기</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+</section>
+
+@code {
+    private List<CalendarEvent> monthEvents = new();
+    private CalendarEvent? editingEvent = null;
+    private int currentYear = DateTime.Now.Year;
+    private int currentMonth = DateTime.Now.Month;
+    private string successMessage = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMonthEvents();
+    }
+
+    private async Task LoadMonthEvents()
+    {
+        try
+        {
+            var (result, _) = await CalendarService.GetPagedEventsAsync(
+                page: 1,
+                pageSize: 1000,
+                year: currentYear,
+                month: currentMonth,
+                sortBy: "EventDate",
+                sortDescending: false
+            );
+            monthEvents = result.ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading calendar events");
+            errorMessage = "일정을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task PreviousMonth()
+    {
+        currentMonth--;
+        if (currentMonth < 1)
+        {
+            currentMonth = 12;
+            currentYear--;
+        }
+        await LoadMonthEvents();
+    }
+
+    private async Task NextMonth()
+    {
+        currentMonth++;
+        if (currentMonth > 12)
+        {
+            currentMonth = 1;
+            currentYear++;
+        }
+        await LoadMonthEvents();
+    }
+
+    private void AddNewEvent()
+    {
+        editingEvent = new CalendarEvent
+        {
+            EventDate = new DateTime(currentYear, currentMonth, DateTime.UtcNow.Day > DateTime.DaysInMonth(currentYear, currentMonth) ? 1 : DateTime.UtcNow.Day, 0, 0, 0, DateTimeKind.Utc),
+            EventType = "event",
+            IsVisible = true,
+            Title = "",
+            Description = "",
+            Time = "",
+            SortOrder = 0
+        };
+    }
+
+    private void EditEvent(CalendarEvent evt)
+    {
+        editingEvent = new CalendarEvent
+        {
+            Id = evt.Id,
+            EventDate = evt.EventDate,
+            EventType = evt.EventType,
+            Title = evt.Title,
+            Description = evt.Description,
+            Time = evt.Time,
+            IsVisible = evt.IsVisible,
+            SortOrder = evt.SortOrder
+        };
+    }
+
+    private async Task SaveEvent()
+    {
+        if (editingEvent == null) return;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(editingEvent.Title))
+            {
+                errorMessage = "일정 제목을 입력하세요.";
+                successMessage = "";
+                return;
+            }
+
+            if (editingEvent.Id == 0)
+            {
+                // Create
+                await CalendarService.CreateEventAsync(editingEvent);
+                successMessage = "일정이 추가되었습니다.";
+                errorMessage = "";
+            }
+            else
+            {
+                // Update
+                var existing = await CalendarService.GetEventByIdAsync(editingEvent.Id);
+                if (existing != null)
+                {
+                    existing.EventDate = editingEvent.EventDate;
+                    existing.EventType = editingEvent.EventType;
+                    existing.Title = editingEvent.Title;
+                    existing.Description = editingEvent.Description;
+                    existing.Time = editingEvent.Time;
+                    existing.IsVisible = editingEvent.IsVisible;
+                    existing.SortOrder = editingEvent.SortOrder;
+
+                    await CalendarService.UpdateEventAsync(existing);
+                    successMessage = "일정이 수정되었습니다.";
+                    errorMessage = "";
+                }
+            }
+
+            editingEvent = null;
+            await LoadMonthEvents();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"저장 중 오류가 발생했습니다: {ex.Message}";
+            successMessage = "";
+            Logger.LogError(ex, "Error saving event");
+        }
+    }
+
+    private void CancelEdit()
+    {
+        editingEvent = null;
+    }
+
+    private async Task DeleteEvent(CalendarEvent evt)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"{evt.Title} 일정을 삭제하시겠습니까?");
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await CalendarService.DeleteEventAsync(evt.Id);
+            if (result)
+            {
+                successMessage = "일정이 삭제되었습니다.";
+                errorMessage = "";
+                await LoadMonthEvents();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"삭제 중 오류가 발생했습니다: {ex.Message}";
+            successMessage = "";
+            Logger.LogError(ex, "Error deleting event");
+        }
+    }
+
+    private async Task ToggleVisibility(CalendarEvent evt, bool isVisible)
+    {
+        try
+        {
+            evt.IsVisible = isVisible;
+            await CalendarService.UpdateEventAsync(evt);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling visibility");
+            errorMessage = "노출 설정 변경 중 오류가 발생했습니다.";
+        }
+    }
+}

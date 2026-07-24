@@ -1,0 +1,110 @@
+@model ChurchWeb.Web.Models.News.CalendarVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+    var prevMonth = Model.Month == 1 ? 12 : Model.Month - 1;
+    var prevYear = Model.Month == 1 ? Model.Year - 1 : Model.Year;
+    var nextMonth = Model.Month == 12 ? 1 : Model.Month + 1;
+    var nextYear = Model.Month == 12 ? Model.Year + 1 : Model.Year;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 소식 &nbsp;›&nbsp; <b>{Model.PageTitle}</b>", Model.PageTitle, Model.PageSubtitle)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "calendar")' />
+
+<main class="content calendar-page">
+    <div class="container">
+
+        <!-- 달력 헤더 -->
+        <div class="calendar-header">
+            <a href="/news/calendar?year=@prevYear&month=@prevMonth" class="btn-nav">‹</a>
+            <h2 class="month-title">@(Model.Year)년 @(Model.Month)월</h2>
+            <a href="/news/calendar?year=@nextYear&month=@nextMonth" class="btn-nav">›</a>
+        </div>
+
+        <!-- 달력 그리드 -->
+        <div class="calendar-grid">
+            <div class="calendar-weekdays">
+                <div class="weekday sun">일</div>
+                <div class="weekday">월</div>
+                <div class="weekday">화</div>
+                <div class="weekday">수</div>
+                <div class="weekday">목</div>
+                <div class="weekday">금</div>
+                <div class="weekday sat">토</div>
+            </div>
+
+            <div class="calendar-days">
+                @foreach (var day in Model.Days)
+                {
+                    <div class="cal-day @(day.IsCurrentMonth ? "" : "out") @(day.IsToday ? "today" : "") @(day.IsSunday ? "sun" : "") @(day.IsSaturday ? "sat" : "")">
+                        <div class="day-num">@day.Date.Day</div>
+                        @if (day.Events.Count > 0)
+                        {
+                            <div class="day-events">
+                                @foreach (var evt in day.Events.Take(2))
+                                {
+                                    <div class="event @evt.Type">@evt.Title</div>
+                                }
+                                @if (day.Events.Count > 2)
+                                {
+                                    <div class="event-more">+@(day.Events.Count - 2)</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- 하단 일정 목록 -->
+        <div class="calendar-lists">
+            <!-- 오늘의 일정 -->
+            <div class="list-section">
+                <h3>오늘의 일정</h3>
+                @if (Model.TodayEvents.Count == 0)
+                {
+                    <p class="empty">오늘 등록된 일정이 없습니다</p>
+                }
+                else
+                {
+                    <div class="event-list">
+                        @foreach (var evt in Model.TodayEvents)
+                        {
+                            <div class="event-item @evt.Type">
+                                <span class="evt-title">@evt.Title</span>
+                                @if (!string.IsNullOrEmpty(evt.Time))
+                                {
+                                    <span class="evt-time">@evt.Time</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- 이달의 일정 -->
+            <div class="list-section">
+                <h3>이달의 일정</h3>
+                @if (Model.MonthEvents.Count == 0)
+                {
+                    <p class="empty">이달 등록된 일정이 없습니다</p>
+                }
+                else
+                {
+                    <div class="event-list">
+                        @foreach (var evt in Model.MonthEvents)
+                        {
+                            <div class="event-item @evt.Type">
+                                <span class="evt-title">@evt.Title</span>
+                                @if (!string.IsNullOrEmpty(evt.Time))
+                                {
+                                    <span class="evt-time">@evt.Time</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</main>

@@ -1,0 +1,13 @@
+@*
+    페이지 배너 Partial (공통)
+    사용 예: <partial name="_PageHero" model='("홈 › 교회소개 › <b>사명과 비전</b>", "사명과 비전", "말씀 위에 세워진 공동체")' />
+*@
+@model (string Crumb, string Title, string Subtitle)
+
+<section class="page-hero">
+    <div class="container inner">
+        <div class="crumb">@Html.Raw(Model.Crumb)</div>
+        <h1>@Model.Title</h1>
+        <div class="sub">@Model.Subtitle</div>
+    </div>
+</section>

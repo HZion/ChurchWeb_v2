@@ -1,0 +1,178 @@
+@model ChurchWeb.Web.Models.Admin.DashboardViewModel
+@{
+    ViewData["Title"] = "대시보드";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-head">
+    <h2 class="serif">대시보드</h2>
+    <p>ChurchWeb 콘텐츠 관리 시스템 메인 화면입니다.</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid g3">
+    <div class="card stat">
+        <div class="row">
+            <div>
+                <div class="label">설교</div>
+                <div class="num">@Model.Statistics.TotalSermons</div>
+            </div>
+            <div class="ic-badge" style="background:#e3f2fd">📖</div>
+        </div>
+    </div>
+
+    <div class="card stat">
+        <div class="row">
+            <div>
+                <div class="label">주보</div>
+                <div class="num">@Model.Statistics.TotalBulletins</div>
+            </div>
+            <div class="ic-badge" style="background:#f3e5f5">📄</div>
+        </div>
+    </div>
+
+    <div class="card stat">
+        <div class="row">
+            <div>
+                <div class="label">앨범</div>
+                <div class="num">@Model.Statistics.TotalAlbums</div>
+            </div>
+            <div class="ic-badge" style="background:#ffebee">📷</div>
+        </div>
+    </div>
+
+    <div class="card stat">
+        <div class="row">
+            <div>
+                <div class="label">공지사항</div>
+                <div class="num">@Model.Statistics.TotalNotices</div>
+            </div>
+            <div class="ic-badge" style="background:#e0f2f1">📢</div>
+        </div>
+    </div>
+
+    <div class="card stat">
+        <div class="row">
+            <div>
+                <div class="label">일정</div>
+                <div class="num">@Model.Statistics.TotalEvents</div>
+            </div>
+            <div class="ic-badge" style="background:#fff3e0">📅</div>
+        </div>
+    </div>
+
+    <div class="card stat">
+        <div class="row">
+            <div>
+                <div class="label">히어로 슬라이드</div>
+                <div class="num">@Model.Statistics.TotalHeroSlides</div>
+            </div>
+            <div class="ic-badge" style="background:#eceff1">🎨</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Content -->
+<div class="grid g3 mt">
+    <div class="card">
+        <h3>최근 설교</h3>
+        <div class="sub">최근 등록된 5건</div>
+        @if (Model.RecentSermons.Any())
+        {
+            <div style="margin-top:1rem">
+                @foreach (var sermon in Model.RecentSermons)
+                {
+                    <div style="padding:0.75rem 0;border-bottom:1px solid var(--line)">
+                        <div style="font-weight:600;color:var(--ink);margin-bottom:0.25rem">@sermon.Title</div>
+                        <small style="color:var(--muted)">@sermon.Date.ToString("yyyy.MM.dd") · @sermon.Category</small>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="color:var(--muted);margin-top:1rem">등록된 설교가 없습니다.</p>
+        }
+    </div>
+
+    <div class="card">
+        <h3>최근 주보</h3>
+        <div class="sub">최근 등록된 5건</div>
+        @if (Model.RecentBulletins.Any())
+        {
+            <div style="margin-top:1rem">
+                @foreach (var bulletin in Model.RecentBulletins)
+                {
+                    <div style="padding:0.75rem 0;border-bottom:1px solid var(--line)">
+                        <div style="font-weight:600;color:var(--ink);margin-bottom:0.25rem">@bulletin.Title</div>
+                        <small style="color:var(--muted)">@bulletin.Date.ToString("yyyy.MM.dd")</small>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="color:var(--muted);margin-top:1rem">등록된 주보가 없습니다.</p>
+        }
+    </div>
+
+    <div class="card">
+        <h3>최근 공지</h3>
+        <div class="sub">최근 등록된 5건</div>
+        @if (Model.RecentNotices.Any())
+        {
+            <div style="margin-top:1rem">
+                @foreach (var notice in Model.RecentNotices)
+                {
+                    <div style="padding:0.75rem 0;border-bottom:1px solid var(--line)">
+                        <div style="font-weight:600;color:var(--ink);margin-bottom:0.25rem">@notice.Title</div>
+                        <small style="color:var(--muted)">@notice.Date.ToString("yyyy.MM.dd") · @notice.Category</small>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="color:var(--muted);margin-top:1rem">등록된 공지가 없습니다.</p>
+        }
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="card mt">
+    <h3>빠른 이동</h3>
+    <div class="qa">
+        <a href="/Admin/Sermons" class="q-card">
+            <i class="bi bi-play-circle"></i>
+            <span>설교 관리</span>
+        </a>
+        <a href="/Admin/Bulletins" class="q-card">
+            <i class="bi bi-file-text"></i>
+            <span>주보 관리</span>
+        </a>
+        <a href="/Admin/Albums" class="q-card">
+            <i class="bi bi-images"></i>
+            <span>갤러리 관리</span>
+        </a>
+        <a href="/Admin/Notices" class="q-card">
+            <i class="bi bi-megaphone"></i>
+            <span>공지 관리</span>
+        </a>
+        <a href="/Admin/Calendar" class="q-card">
+            <i class="bi bi-calendar-event"></i>
+            <span>일정 관리</span>
+        </a>
+        <a href="/Admin/Hero" class="q-card">
+            <i class="bi bi-image"></i>
+            <span>히어로 관리</span>
+        </a>
+        <a href="/Admin/Menu" class="q-card">
+            <i class="bi bi-list"></i>
+            <span>메뉴 관리</span>
+        </a>
+        <a href="/Admin/ChurchInfo" class="q-card">
+            <i class="bi bi-pencil"></i>
+            <span>교회 정보</span>
+        </a>
+    </div>
+</div>

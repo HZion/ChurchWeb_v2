@@ -1,0 +1,90 @@
+@model ChurchWeb.Web.Models.Admin.OutreachCardViewModel
+@{
+    ViewData["Title"] = "온라인 전도카드";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-head">
+    <h2 class="serif">온라인 전도카드</h2>
+    <p>QR·단축 URL 전용 모바일 원페이지입니다. 밝은 베이지 톤으로 야외 가독성을 확보합니다.</p>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+
+<div class="split">
+    <div class="card" style="flex:1;min-width:420px">
+        <h3>카드 내용 관리</h3>
+        <div class="sub">별도 DB 없이 교회 정보 설정에서 바로 편집됩니다.</div>
+
+        <form asp-action="Save" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="field">
+                <label>환영 문구</label>
+                <textarea asp-for="WelcomeMessage" rows="3" placeholder="지치고 무거운 짐 진 당신을 예수님의 사랑으로 초대합니다."></textarea>
+            </div>
+
+            <div class="field">
+                <label>대표 연락처</label>
+                <input asp-for="Phone" type="text" readonly />
+                <small class="text-muted">※ 교회 정보에서 수정 가능합니다.</small>
+            </div>
+
+            <div class="field">
+                <label>길찾기 링크 (지도 URL)</label>
+                <input asp-for="MapLink" type="url" placeholder="https://map.naver.com/..." />
+            </div>
+
+            <div class="field">
+                <label>전용 단축 URL</label>
+                <input asp-for="ShortUrl" type="text" placeholder="https://yourdomain.com/welcome" />
+            </div>
+
+            <div class="info-strip" style="margin:0">
+                <i class="bi bi-qr-code"></i> QR 코드는 저장 시 자동 생성되어 인쇄용 이미지로 내려받을 수 있습니다.
+            </div>
+
+            <div class="flex-end mt">
+                <a href="@Url.Action("DownloadQR")" class="btn ghost">
+                    <i class="bi bi-download"></i> QR 다운로드
+                </a>
+                <button type="submit" class="btn primary">
+                    <i class="bi bi-save"></i> 저장하기
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" style="width:330px;display:flex;flex-direction:column;align-items:center">
+        <h3 style="align-self:flex-start">모바일 미리보기</h3>
+        <div class="sub" style="align-self:flex-start">실제 표시 예시</div>
+
+        <div class="phone">
+            <div class="p-hero">
+                <div class="cross">✝</div>
+                <h5>@(Model.ChurchName)에 초대합니다</h5>
+                <p>@(string.IsNullOrEmpty(Model.WelcomeMessage) ? "지치고 무거운 짐 진 당신을 예수님의 사랑으로 초대합니다." : Model.WelcomeMessage)</p>
+            </div>
+            <div class="p-body">
+                <div class="p-row">🕊 @(string.IsNullOrEmpty(Model.WorshipTimes) ? "주일 오전 11:00 예배" : Model.WorshipTimes.Split('·').FirstOrDefault()?.Trim())</div>
+                <div class="p-row">📍 @Model.Address</div>
+                <div class="p-row">☎ @Model.Phone</div>
+                <div class="p-cta">길찾기 바로가기 →</div>
+            </div>
+        </div>
+    </div>
+</div>

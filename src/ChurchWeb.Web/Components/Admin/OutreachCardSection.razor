@@ -1,0 +1,475 @@
+@using ChurchWeb.Core.Entities.Outreach
+@using QRCoder
+@inject IEvangelistAdminService EvangelistService
+@inject ILogger<OutreachCardSection> Logger
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">온라인 전도카드 관리</h2>
+        <p>전도자별 전도카드를 관리하고 QR 코드를 생성합니다.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null">×</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null">×</button>
+        </div>
+    }
+
+    @if (showForm)
+    {
+        <!-- 전도자 등록/수정 폼 -->
+        <div class="card">
+            <h3>@(editingEvangelist?.Id > 0 ? "전도자 수정" : "새 전도자 등록")</h3>
+
+            <EditForm Model="@editingEvangelist" OnValidSubmit="SaveEvangelist">
+                <div class="grid g2">
+                    <div class="field">
+                        <label>이름 *</label>
+                        <InputText @bind-Value="editingEvangelist!.Name" placeholder="홍길동" />
+                    </div>
+
+                    <div class="field">
+                        <label>직분</label>
+                        <InputText @bind-Value="editingEvangelist.Title" placeholder="전도사" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>전화번호 *</label>
+                    <InputText @bind-Value="editingEvangelist.Phone" type="tel" placeholder="010-1234-5678" />
+                </div>
+
+                <div class="field">
+                    <label>전도자 사진</label>
+                    <ImageUploader ImageUrl="@editingEvangelist.PhotoUrl"
+                                   ImageUrlChanged="OnPhotoUrlChanged" />
+                    <small style="color:#999">권장 크기: 300x300 픽셀</small>
+                </div>
+
+                <div class="field">
+                    <label>환영 인사말</label>
+                    <InputTextArea @bind-Value="editingEvangelist.Greeting" rows="3"
+                                   placeholder="안녕하세요! 만나서 반갑습니다." />
+                </div>
+
+                <div class="grid g2">
+                    <div class="field">
+                        <label>정렬 순서</label>
+                        <InputNumber @bind-Value="editingEvangelist.SortOrder" />
+                        <small style="color:#999">작은 숫자가 먼저 표시됩니다</small>
+                    </div>
+
+                    <div class="field">
+                        <label>활성 상태</label>
+                        <div style="margin-top:8px">
+                            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+                                <InputCheckbox @bind-Value="editingEvangelist.IsActive" />
+                                <span>활성화 (비활성화 시 카드 접근 불가)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-end" style="margin-top:1.5rem">
+                    <button type="button" class="btn ghost" @onclick="CancelEdit">취소</button>
+                    <button type="submit" class="btn primary">저장하기</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+    else
+    {
+        <!-- 전도자 목록 -->
+        <div class="card">
+            <div class="row" style="align-items:center;margin-bottom:1rem">
+                <h3 style="margin:0">전도자 목록 (@evangelists.Count 명)</h3>
+                <div class="spacer"></div>
+                <button type="button" class="btn primary" @onclick="ShowCreateForm">
+                    + 새 전도자 등록
+                </button>
+            </div>
+
+            @if (evangelists.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">순서</th>
+                                <th style="width: 80px;">사진</th>
+                                <th>이름</th>
+                                <th style="width: 120px;">직분</th>
+                                <th style="width: 140px;">전화번호</th>
+                                <th style="width: 100px;">활성 상태</th>
+                                <th style="width: 120px;">등록일</th>
+                                <th style="width: 200px;" class="text-center">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var evangelist in evangelists)
+                            {
+                                <tr>
+                                    <td style="text-align:center">
+                                        <span class="tag">@evangelist.SortOrder</span>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(evangelist.PhotoUrl))
+                                        {
+                                            <img src="@evangelist.PhotoUrl" alt="@evangelist.Name"
+                                                 style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--line)" />
+                                        }
+                                        else
+                                        {
+                                            <div style="width:50px;height:50px;border-radius:50%;background:var(--beige);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(--line)">
+                                                👤
+                                            </div>
+                                        }
+                                    </td>
+                                    <td><b>@evangelist.Name</b></td>
+                                    <td>@evangelist.Title</td>
+                                    <td>@evangelist.Phone</td>
+                                    <td>
+                                        <button type="button"
+                                                class="tag @(evangelist.IsActive ? "" : "g")"
+                                                @onclick="() => ToggleActiveStatus(evangelist.Id)">
+                                            @(evangelist.IsActive ? "활성" : "비활성")
+                                        </button>
+                                    </td>
+                                    <td>@evangelist.CreatedAt.ToString("yyyy.MM.dd")</td>
+                                    <td class="text-center">
+                                        <div style="display:flex;gap:0.5rem;justify-content:center">
+                                            <button type="button" class="btn ghost sm"
+                                                    @onclick="() => ShowQRCode(evangelist)">
+                                                QR 코드
+                                            </button>
+                                            <button type="button" class="btn ghost sm"
+                                                    @onclick="() => ShowEditForm(evangelist)">
+                                                수정
+                                            </button>
+                                            <button type="button" class="btn ghost sm"
+                                                    @onclick="() => DeleteEvangelist(evangelist.Id)">
+                                                삭제
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div style="text-align:center;padding:3rem;color:var(--muted)">
+                    <div style="font-size:48px;margin-bottom:1rem">📇</div>
+                    <p>등록된 전도자가 없습니다.<br/>새 전도자를 등록해주세요.</p>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- QR 코드 모달 -->
+    @if (showQRModal && selectedEvangelist != null)
+    {
+        <div class="modal-overlay" @onclick="CloseQRModal">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h3>@selectedEvangelist.Name 전도카드 QR 코드</h3>
+                    <button type="button" class="btn-close" @onclick="CloseQRModal">×</button>
+                </div>
+                <div class="modal-body" style="text-align:center">
+                    <p style="margin-bottom:1rem;color:var(--muted)">
+                        QR 코드를 스캔하면 전도카드 페이지로 이동합니다.
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(qrCodeDataUrl))
+                    {
+                        <div style="display:inline-block;padding:20px;background:#fff;border-radius:12px;border:2px solid var(--line)">
+                            <img src="@qrCodeDataUrl" alt="QR Code" style="width:250px;height:250px" />
+                        </div>
+
+                        <div style="margin-top:1.5rem;padding:1rem;background:var(--cream);border-radius:8px">
+                            <small style="color:var(--muted);display:block;margin-bottom:0.5rem">카드 URL:</small>
+                            <code style="font-size:0.9rem;word-break:break-all">@currentCardUrl</code>
+                        </div>
+
+                        <div style="margin-top:1rem">
+                            <button type="button" class="btn primary" @onclick="DownloadQRCode">
+                                QR 코드 다운로드
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+    .modal-header h3 {
+        margin: 0;
+        font-family: var(--serif);
+        font-size: 1.25rem;
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .btn-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: var(--beige);
+        color: var(--ink);
+        font-size: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-close:hover {
+        background: var(--line);
+    }
+    .btn.sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+</style>
+
+@code {
+    private List<Evangelist> evangelists = new();
+    private Evangelist? editingEvangelist;
+    private Evangelist? selectedEvangelist;
+    private string? successMessage;
+    private string? errorMessage;
+    private bool showForm = false;
+    private bool showQRModal = false;
+    private string? qrCodeDataUrl;
+    private string? currentCardUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvangelists();
+    }
+
+    private async Task LoadEvangelists()
+    {
+        try
+        {
+            evangelists = await EvangelistService.GetAllEvangelistsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading evangelists");
+            errorMessage = "전도자 목록을 불러오는 중 오류가 발생했습니다.";
+        }
+    }
+
+    private void ShowCreateForm()
+    {
+        editingEvangelist = new Evangelist
+        {
+            IsActive = true,
+            SortOrder = evangelists.Any() ? evangelists.Max(e => e.SortOrder) + 1 : 1,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+        showForm = true;
+        successMessage = null;
+        errorMessage = null;
+    }
+
+    private void ShowEditForm(Evangelist evangelist)
+    {
+        editingEvangelist = new Evangelist
+        {
+            Id = evangelist.Id,
+            Name = evangelist.Name,
+            Title = evangelist.Title,
+            Phone = evangelist.Phone,
+            PhotoUrl = evangelist.PhotoUrl,
+            Greeting = evangelist.Greeting,
+            IsActive = evangelist.IsActive,
+            SortOrder = evangelist.SortOrder,
+            CreatedAt = evangelist.CreatedAt,
+            UpdatedAt = DateTime.Now
+        };
+        showForm = true;
+        successMessage = null;
+        errorMessage = null;
+    }
+
+    private void CancelEdit()
+    {
+        editingEvangelist = null;
+        showForm = false;
+    }
+
+    private void OnPhotoUrlChanged(string newUrl)
+    {
+        if (editingEvangelist != null)
+        {
+            editingEvangelist.PhotoUrl = newUrl;
+        }
+    }
+
+    private async Task SaveEvangelist()
+    {
+        try
+        {
+            if (editingEvangelist == null) return;
+
+            if (string.IsNullOrWhiteSpace(editingEvangelist.Name))
+            {
+                errorMessage = "이름을 입력해주세요.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(editingEvangelist.Phone))
+            {
+                errorMessage = "전화번호를 입력해주세요.";
+                return;
+            }
+
+            editingEvangelist.UpdatedAt = DateTime.Now;
+
+            if (editingEvangelist.Id == 0)
+            {
+                editingEvangelist.CreatedAt = DateTime.Now;
+                await EvangelistService.CreateEvangelistAsync(editingEvangelist);
+                successMessage = "새 전도자가 성공적으로 등록되었습니다.";
+            }
+            else
+            {
+                await EvangelistService.UpdateEvangelistAsync(editingEvangelist);
+                successMessage = "전도자 정보가 성공적으로 수정되었습니다.";
+            }
+
+            await LoadEvangelists();
+            editingEvangelist = null;
+            showForm = false;
+            errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving evangelist");
+            errorMessage = "전도자 정보 저장 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task ToggleActiveStatus(int id)
+    {
+        try
+        {
+            await EvangelistService.ToggleActiveStatusAsync(id);
+            await LoadEvangelists();
+            successMessage = "활성 상태가 변경되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling active status");
+            errorMessage = "활성 상태 변경 중 오류가 발생했습니다.";
+        }
+    }
+
+    private async Task DeleteEvangelist(int id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "정말 삭제하시겠습니까?"))
+            return;
+
+        try
+        {
+            await EvangelistService.DeleteEvangelistAsync(id);
+            await LoadEvangelists();
+            successMessage = "전도자가 성공적으로 삭제되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting evangelist");
+            errorMessage = "전도자 삭제 중 오류가 발생했습니다.";
+        }
+    }
+
+    private void ShowQRCode(Evangelist evangelist)
+    {
+        selectedEvangelist = evangelist;
+
+        // 현재 사이트 URL 가져오기
+        var baseUrl = Navigation.BaseUri.TrimEnd('/');
+        currentCardUrl = $"{baseUrl}/outreach/{evangelist.Id}";
+
+        // QR 코드 생성
+        using var qrGenerator = new QRCodeGenerator();
+        using var qrCodeData = qrGenerator.CreateQrCode(currentCardUrl, QRCodeGenerator.ECCLevel.Q);
+        using var qrCode = new PngByteQRCode(qrCodeData);
+        var qrCodeBytes = qrCode.GetGraphic(20);
+        qrCodeDataUrl = $"data:image/png;base64,{Convert.ToBase64String(qrCodeBytes)}";
+
+        showQRModal = true;
+    }
+
+    private void CloseQRModal()
+    {
+        showQRModal = false;
+        selectedEvangelist = null;
+        qrCodeDataUrl = null;
+        currentCardUrl = null;
+    }
+
+    private async Task DownloadQRCode()
+    {
+        if (string.IsNullOrEmpty(qrCodeDataUrl) || selectedEvangelist == null)
+            return;
+
+        try
+        {
+            var fileName = $"전도카드_QR_{selectedEvangelist.Name}.png";
+            await JS.InvokeVoidAsync("downloadBase64File", qrCodeDataUrl, fileName);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error downloading QR code");
+            errorMessage = "QR 코드 다운로드 중 오류가 발생했습니다.";
+        }
+    }
+}

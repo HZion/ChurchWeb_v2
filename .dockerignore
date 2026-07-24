@@ -1,0 +1,11 @@
+bin/
+obj/
+.git/
+.vs/
+.vscode/
+*.user
+*.suo
+appsettings.Development.json
+.env
+node_modules/
+wwwroot/uploads/

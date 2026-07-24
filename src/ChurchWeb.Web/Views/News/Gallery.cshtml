@@ -1,0 +1,81 @@
+@model ChurchWeb.Web.Models.News.GalleryListVm
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<partial name="_PageHero" model='($"홈 &nbsp;›&nbsp; 소식 &nbsp;›&nbsp; <b>{Model.PageTitle}</b>", Model.PageTitle, Model.PageSubtitle)' />
+<partial name="_SubNav" model='((IEnumerable<object>)Model.Tabs, "gallery")' />
+
+<main class="content">
+    <div class="container">
+
+        @if (Model.Albums.Count == 0)
+        {
+            <!-- 빈 상태 -->
+            <div class="empty-state">
+                <div class="empty-icon">📷</div>
+                <h3>아직 등록된 갤러리가 없습니다</h3>
+                <p>곧 업데이트될 예정입니다. 조금만 기다려주세요.</p>
+            </div>
+        }
+        else
+        {
+            <!-- 툴바 (연도 필터, 개수) -->
+            <div class="toolbar">
+                <div class="filters">
+                    <button class="filter-btn @(Model.SelectedYear == null ? "active" : "")"
+                            onclick="location.href='/news/gallery'">전체</button>
+                    @foreach (var year in Model.Years)
+                    {
+                        <button class="filter-btn @(Model.SelectedYear == year ? "active" : "")"
+                                onclick="location.href='/news/gallery?year=@year'">@year</button>
+                    }
+                </div>
+                <div class="count">총 <b>@Model.TotalCount</b>개의 앨범</div>
+            </div>
+
+            <!-- 갤러리 앨범 그리드 -->
+            <div class="gallery-grid">
+                @foreach (var album in Model.Albums)
+                {
+                    <a href="/news/gallery/@album.Id" class="album-card">
+                        <div class="cover">
+                            <div class="cover-img">
+                                <img src="@album.CoverUrl" alt="@album.Title" loading="lazy" />
+                            </div>
+                            <div class="overlay">
+                                <span class="icon">🖼️</span>
+                                <span class="count">@(album.PhotoCount)장</span>
+                            </div>
+                        </div>
+                        <div class="b">
+                            <div class="title">@album.Title</div>
+                            <div class="date">@album.Date</div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <!-- 페이지네이션 -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @if (Model.Page > 1)
+                    {
+                        <a href="?page=@(Model.Page - 1)@(Model.SelectedYear != null ? $"&year={Model.SelectedYear}" : "")" class="page-link">‹ 이전</a>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <a href="?page=@i@(Model.SelectedYear != null ? $"&year={Model.SelectedYear}" : "")"
+                           class="page-link @(i == Model.Page ? "active" : "")">@i</a>
+                    }
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="?page=@(Model.Page + 1)@(Model.SelectedYear != null ? $"&year={Model.SelectedYear}" : "")" class="page-link">다음 ›</a>
+                    }
+                </div>
+            }
+        }
+
+    </div>
+</main>

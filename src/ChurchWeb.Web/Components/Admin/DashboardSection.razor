@@ -1,0 +1,71 @@
+@inject ILogger<DashboardSection> Logger
+
+<section class="page show">
+    <div class="page-head">
+        <h2 class="serif">환영합니다, 관리자님</h2>
+        <p>@DateTime.Now.ToString("yyyy년 M월 d일") · 오늘 예배 안내와 사이트 현황을 한눈에 확인하세요.</p>
+    </div>
+
+    <div class="grid g4">
+        <div class="card stat">
+            <div class="row"><span class="label">이번 주 방문자</span><div class="ic-badge">◔</div></div>
+            <div class="num">1,284 <small>명</small></div>
+            <div class="delta up">▲ 12.4% 지난주 대비</div>
+        </div>
+        <div class="card stat">
+            <div class="row"><span class="label">등록된 설교</span><div class="ic-badge">▶</div></div>
+            <div class="num">312 <small>편</small></div>
+            <div class="delta up">▲ 이번 주 2편 추가</div>
+        </div>
+        <div class="card stat">
+            <div class="row"><span class="label">전도카드 열람</span><div class="ic-badge">◈</div></div>
+            <div class="num">476 <small>회</small></div>
+            <div class="delta up">▲ QR 스캔 89회</div>
+        </div>
+        <div class="card stat">
+            <div class="row"><span class="label">공개 게시판</span><div class="ic-badge">☰</div></div>
+            <div class="num">7 <small>개</small></div>
+            <div class="delta">숨김 2 · 노출 5</div>
+        </div>
+    </div>
+
+    <div class="grid g2 mt">
+        <div class="card">
+            <h3>빠른 작업</h3>
+            <div class="sub">자주 쓰는 관리 기능으로 바로 이동합니다.</div>
+            <div class="qa">
+                <a @onclick="@(() => OnNavigate.InvokeAsync("basic"))"><div class="ic">✎</div><div><b>올해의 표어 수정</b><span>비전 문구·실천사항</span></div></a>
+                <a @onclick="@(() => OnNavigate.InvokeAsync("sermon"))"><div class="ic">▶</div><div><b>설교 영상 등록</b><span>유튜브 URL 붙여넣기</span></div></a>
+                <a @onclick="@(() => OnNavigate.InvokeAsync("card"))"><div class="ic">◈</div><div><b>전도카드 관리</b><span>환영 문구·연락처</span></div></a>
+                <a class="soon"><div class="ic">⚙</div><div><b>새 게시판 만들기</b><span>무코드 빌더</span></div></a>
+            </div>
+        </div>
+        <div class="card">
+            <h3>최근 활동</h3>
+            <div class="sub">사이트에 반영된 변경 내역입니다.</div>
+            <div class="rowline"><span class="dot"></span><div class="t">주일 설교 '믿음의 반석 위에' 등록</div><span class="tag g">설교</span><span class="time">2시간 전</span></div>
+            <div class="rowline"><span class="dot"></span><div class="t">공지사항 '여름 수련회 안내' 필독 고정</div><span class="tag o">소식</span><span class="time">어제</span></div>
+            <div class="rowline"><span class="dot"></span><div class="t">'후원하는 교회' 서브메뉴 숨김 처리</div><span class="tag r">메뉴</span><span class="time">2일 전</span></div>
+            <div class="rowline"><span class="dot"></span><div class="t">올해의 표어 문구 수정</div><span class="tag o">기본</span><span class="time">3일 전</span></div>
+        </div>
+    </div>
+
+    <div class="card mt">
+        <h3>이번 주 예배 안내 <span style="font-size:12px;color:var(--muted);font-weight:400">· 메인 화면 노출 중</span></h3>
+        <div class="sub">홈 인포메이션 영역에 표시되는 예배 시간표입니다.</div>
+        <table class="table">
+            <thead><tr><th>구분</th><th>요일 / 시간</th><th>장소</th><th>상태</th></tr></thead>
+            <tbody>
+                <tr><td>주일 오전 예배</td><td>주일 11:00</td><td>본당</td><td><span class="pill">노출</span></td></tr>
+                <tr><td>주일 오후 예배</td><td>주일 14:00</td><td>본당</td><td><span class="pill">노출</span></td></tr>
+                <tr><td>수요 예배</td><td>수요일 19:30</td><td>본당</td><td><span class="pill">노출</span></td></tr>
+                <tr><td>새벽 예배</td><td>매일 05:30</td><td>소예배실</td><td><span class="pill">노출</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public EventCallback<string> OnNavigate { get; set; }
+}

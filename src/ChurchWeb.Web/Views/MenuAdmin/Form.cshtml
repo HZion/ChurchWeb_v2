@@ -1,0 +1,155 @@
+@model ChurchWeb.Web.Models.Admin.MenuItemViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? "메뉴 추가" : "메뉴 수정";
+    Layout = "_AdminLayout";
+    var parentMenuItems = ViewBag.ParentMenuItems as List<ChurchWeb.Core.Entities.Common.NavMenuItem> ?? new List<ChurchWeb.Core.Entities.Common.NavMenuItem>();
+}
+
+<div class="page-head">
+    <h2 class="serif">@ViewData["Title"]</h2>
+    <p>대시보드 / 메뉴 관리 / @ViewData["Title"]</p>
+</div>
+
+<div class="card">
+    <form asp-action="Save" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <h3>기본 정보</h3>
+
+        <div class="grid g2">
+            <div class="field">
+                <label asp-for="Title">제목 <span class="text-danger">*</span></label>
+                <input asp-for="Title" type="text" placeholder="메뉴 제목을 입력하세요" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Url">URL <span class="text-danger">*</span></label>
+                <input asp-for="Url" type="text" placeholder="/about, https://example.com 등" />
+                <span asp-validation-for="Url" class="text-danger"></span>
+                <small class="text-muted">상대 경로(/about) 또는 절대 URL(https://...)</small>
+            </div>
+
+            <div class="field">
+                <label asp-for="ParentId">부모 메뉴</label>
+                <select asp-for="ParentId">
+                    <option value="">-- 최상위 메뉴 --</option>
+                    @foreach (var parent in parentMenuItems.Where(m => m.ParentId == null).OrderBy(m => m.SortOrder))
+                    {
+                        <option value="@parent.Id">@parent.Title</option>
+                    }
+                </select>
+                <span asp-validation-for="ParentId" class="text-danger"></span>
+                <small class="text-muted">부모 메뉴를 선택하면 하위 메뉴가 됩니다</small>
+            </div>
+
+            <div class="field">
+                <label asp-for="SortOrder">순서</label>
+                <input asp-for="SortOrder" type="number" min="0" />
+                <span asp-validation-for="SortOrder" class="text-danger"></span>
+                <small class="text-muted">0으로 설정하면 자동으로 마지막에 배치됩니다</small>
+            </div>
+        </div>
+
+        <h3 class="mt">스타일 및 옵션</h3>
+
+        <div class="grid g2">
+            <div class="field">
+                <label asp-for="IconClass">아이콘 클래스</label>
+                <input asp-for="IconClass" type="text" placeholder="bi bi-house-door" />
+                <span asp-validation-for="IconClass" class="text-danger"></span>
+                <small class="text-muted">
+                    Bootstrap Icons 클래스 (예: bi bi-house-door)
+                    <a href="https://icons.getbootstrap.com/" target="_blank" class="ms-2">
+                        <i class="bi bi-box-arrow-up-right"></i> 아이콘 찾기
+                    </a>
+                </small>
+            </div>
+
+            <div class="field">
+                <label>옵션</label>
+                <div class="form-check form-switch">
+                    <input asp-for="OpenInNewTab" class="form-check-input" type="checkbox" />
+                    <label asp-for="OpenInNewTab" class="form-check-label"></label>
+                </div>
+                <small class="text-muted">외부 링크인 경우 새 창으로 열기를 권장합니다</small>
+            </div>
+
+            <div class="field">
+                <label>표시 설정</label>
+                <div class="form-check form-switch">
+                    <input asp-for="IsVisible" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsVisible" class="form-check-label"></label>
+                </div>
+                <small class="text-muted">숨김 처리하면 메뉴에 표시되지 않습니다</small>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Title))
+        {
+            <h3 class="mt">미리보기</h3>
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="nav-item preview-item">
+                        @if (!string.IsNullOrEmpty(Model.IconClass))
+                        {
+                            <i class="@Model.IconClass me-2"></i>
+                        }
+                        @Model.Title
+                        @if (Model.OpenInNewTab)
+                        {
+                            <i class="bi bi-box-arrow-up-right text-muted small ms-1"></i>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="flex-end mt">
+            <a href="/Admin/Menu" class="btn ghost">
+                <i class="bi bi-x-lg"></i> 취소
+            </a>
+            <button type="submit" class="btn primary">
+                <i class="bi bi-check-lg"></i> 저장
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // 실시간 미리보기 업데이트
+        const titleInput = document.querySelector('input[name="Title"]');
+        const iconInput = document.querySelector('input[name="IconClass"]');
+        const newTabCheckbox = document.querySelector('input[name="OpenInNewTab"]');
+
+        function updatePreview() {
+            const previewSection = document.querySelector('.preview-item');
+            if (!previewSection) return;
+
+            const title = titleInput.value || '메뉴 제목';
+            const iconClass = iconInput.value;
+            const openInNewTab = newTabCheckbox.checked;
+
+            let html = '';
+            if (iconClass) {
+                html += `<i class="${iconClass} me-2"></i>`;
+            }
+            html += title;
+            if (openInNewTab) {
+                html += '<i class="bi bi-box-arrow-up-right text-muted small ms-1"></i>';
+            }
+
+            previewSection.innerHTML = html;
+        }
+
+        if (titleInput) {
+            titleInput.addEventListener('input', updatePreview);
+            iconInput.addEventListener('input', updatePreview);
+            newTabCheckbox.addEventListener('change', updatePreview);
+        }
+    </script>
+}
