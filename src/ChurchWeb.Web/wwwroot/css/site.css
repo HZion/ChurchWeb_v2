@@ -58,6 +58,13 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
 .site{background:var(--bg);transition:background .35s,color .35s;min-height:100vh}
+
+/* ===== 스크롤 스냅 설정 ===== */
+main{
+  scroll-snap-type:y mandatory;
+  overflow-y:scroll;
+  height:100vh;
+}
 img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 .container{max-width:var(--container);margin:0 auto;padding:0 24px}
@@ -110,7 +117,7 @@ a{color:inherit;text-decoration:none}
 .site-header.menu-open .nav a{color:var(--heading)}
 
 /* ===== 히어로 슬라이더 ===== */
-.hero{position:relative;min-height:100vh;overflow:hidden;color:#fff}
+.hero{position:relative;min-height:100vh;overflow:hidden;color:#fff;scroll-snap-align:start}
 .slides{position:absolute;inset:0}
 
 /* 핵심: 슬라이드를 겹쳐 쌓고 active만 보이게 */
@@ -157,7 +164,16 @@ a{color:inherit;text-decoration:none}
 .hero .btn-ghost:hover{background:rgba(255,255,255,.12)}
 
 /* ===== 공통 섹션 ===== */
-.section{padding:96px 0}
+.section{
+  padding:96px 0;
+  min-height:100vh;
+  scroll-snap-align:start;
+  display:flex;
+  align-items:center;
+}
+.section > .container{
+  width:100%;
+}
 .section-head{text-align:center;margin-bottom:52px}
 .section-head .ey{color:var(--accent);letter-spacing:.28em;font-size:12px;font-weight:600;margin-bottom:14px}
 .section-head h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,4vw,38px);color:var(--heading)}
@@ -176,7 +192,20 @@ a{color:inherit;text-decoration:none}
 }
 
 /* ===== 비전(올해의 표어) — 다크 밴드 ===== */
-.vision{background:var(--band-bg);color:var(--band-text);text-align:center;padding:100px 0}
+.vision{
+  background:var(--band-bg);
+  color:var(--band-text);
+  text-align:center;
+  padding:100px 0;
+  min-height:100vh;
+  scroll-snap-align:start;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.vision > .container{
+  width:100%;
+}
 .vision .year{color:var(--band-accent);letter-spacing:.3em;font-size:13px;margin-bottom:24px}
 .vision .motto{font-family:var(--serif);font-weight:700;font-size:clamp(28px,5vw,50px);line-height:1.35;white-space:pre-line}
 .vision .motto .q{opacity:.4}
@@ -243,7 +272,15 @@ a{color:inherit;text-decoration:none}
 .gallery .g{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:linear-gradient(135deg,var(--surface-2),color-mix(in srgb,var(--surface-2) 60%,#000 12%));display:grid;place-items:end;padding:12px;color:var(--heading);font-size:12px;font-weight:500}
 
 /* ===== 오시는 길 ===== */
-.locate{background:var(--band-bg);color:var(--band-text);padding:90px 0 0}
+.locate{
+  background:var(--band-bg);
+  color:var(--band-text);
+  padding:90px 0 0;
+  min-height:100vh;
+  scroll-snap-align:start;
+  display:flex;
+  flex-direction:column;
+}
 .locate .row{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center;padding-bottom:60px}
 .locate .vlabel{writing-mode:vertical-rl;letter-spacing:.3em;font-size:13px;color:var(--band-accent);border-left:1px solid rgba(255,255,255,.25);border-right:1px solid rgba(255,255,255,.25);padding:8px 6px}
 .locate .addr{font-family:var(--serif);font-weight:600;font-size:clamp(24px,3.4vw,38px)}

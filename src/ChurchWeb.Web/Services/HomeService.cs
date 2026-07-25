@@ -128,7 +128,7 @@ public class HomeService : IHomeService
                 IsPinned = n.IsPinned,
                 Title = n.Title,
                 Date = n.PostedOn.ToString("MM.dd"),
-                Url = $"/notices/{n.Id}"
+                Url = $"/news/notices/{n.Id}"
             })
             .ToListAsync();
 
@@ -142,7 +142,7 @@ public class HomeService : IHomeService
             {
                 Title = a.Title,
                 ThumbnailUrl = a.CoverImageUrl,
-                Url = $"/albums/{a.Id}",
+                Url = $"/news/gallery/{a.Id}",
                 Photos = a.Photos.Select(p => p.ImageUrl).ToList()
             })
             .ToListAsync();
