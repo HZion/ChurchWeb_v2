@@ -55,16 +55,13 @@
 
 /* ===== 기본 스타일 ===== */
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
-.site{background:var(--bg);transition:background .35s,color .35s;min-height:100vh}
-
-/* ===== 스크롤 스냅 설정 ===== */
-main{
+html{
+  scroll-behavior:smooth;
   scroll-snap-type:y mandatory;
   overflow-y:scroll;
-  height:100vh;
 }
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+.site{background:var(--bg);transition:background .35s,color .35s;min-height:100vh}
 img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 .container{max-width:var(--container);margin:0 auto;padding:0 24px}
@@ -78,9 +75,7 @@ a{color:inherit;text-decoration:none}
 .site-header.scrolled{background:var(--header-bg);border-bottom:1px solid var(--line);backdrop-filter:blur(8px);box-shadow:var(--shadow-sm)}
 .site-header .container{display:flex;align-items:center;justify-content:space-between;width:100%}
 .brand{display:flex;align-items:center;gap:12px}
-.brand .mark{width:40px;height:40px;border-radius:50%;flex-shrink:0;
-  background:conic-gradient(from 210deg,#2f6f4f,#3f8f66,#2f6f4f);
-  display:grid;place-items:center;font-size:9px;color:#fff;font-weight:700;text-align:center;line-height:1.05;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.brand .mark{width:40px;height:40px;border-radius:50%;flex-shrink:0;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .brand .bt{font-family:var(--serif);font-weight:700;font-size:19px;color:var(--heading);transition:color .3s}
 .brand .bt small{display:block;font-family:var(--sans);font-size:10.5px;font-weight:400;color:var(--muted);letter-spacing:.14em}
 /* 히어로 위(투명 헤더)에서는 항상 밝은 글자 */
@@ -166,13 +161,7 @@ a{color:inherit;text-decoration:none}
 /* ===== 공통 섹션 ===== */
 .section{
   padding:96px 0;
-  min-height:100vh;
   scroll-snap-align:start;
-  display:flex;
-  align-items:center;
-}
-.section > .container{
-  width:100%;
 }
 .section-head{text-align:center;margin-bottom:52px}
 .section-head .ey{color:var(--accent);letter-spacing:.28em;font-size:12px;font-weight:600;margin-bottom:14px}
@@ -197,14 +186,7 @@ a{color:inherit;text-decoration:none}
   color:var(--band-text);
   text-align:center;
   padding:100px 0;
-  min-height:100vh;
   scroll-snap-align:start;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.vision > .container{
-  width:100%;
 }
 .vision .year{color:var(--band-accent);letter-spacing:.3em;font-size:13px;margin-bottom:24px}
 .vision .motto{font-family:var(--serif);font-weight:700;font-size:clamp(28px,5vw,50px);line-height:1.35;white-space:pre-line}
@@ -276,10 +258,7 @@ a{color:inherit;text-decoration:none}
   background:var(--band-bg);
   color:var(--band-text);
   padding:90px 0 0;
-  min-height:100vh;
   scroll-snap-align:start;
-  display:flex;
-  flex-direction:column;
 }
 .locate .row{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center;padding-bottom:60px}
 .locate .vlabel{writing-mode:vertical-rl;letter-spacing:.3em;font-size:13px;color:var(--band-accent);border-left:1px solid rgba(255,255,255,.25);border-right:1px solid rgba(255,255,255,.25);padding:8px 6px}
