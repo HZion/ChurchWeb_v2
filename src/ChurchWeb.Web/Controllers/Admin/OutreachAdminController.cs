@@ -8,7 +8,9 @@ using System.Drawing.Imaging;
 
 namespace ChurchWeb.Web.Controllers.Admin;
 
+// DEPRECATED: 이 MVC 컨트롤러는 더 이상 사용되지 않습니다. Blazor Admin 페이지를 사용하세요 (/Admin/outreach)
 [Authorize(Roles = "Admin")]
+[Route("Admin-Old/Outreach")]
 public class OutreachAdminController : Controller
 {
     private readonly IChurchInfoService _churchInfoService;

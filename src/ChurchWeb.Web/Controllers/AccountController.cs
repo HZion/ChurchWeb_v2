@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChurchWeb.Web.Controllers;
 
+[Route("Admin")]
 public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -22,20 +23,20 @@ public class AccountController : Controller
         _logger = logger;
     }
 
-    [HttpGet]
+    [HttpGet("Login")]
     [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Index", "Admin");
+            return Redirect("/Admin");
         }
 
         ViewData["ReturnUrl"] = returnUrl;
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
-    [HttpPost]
+    [HttpPost("Login")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
@@ -68,7 +69,7 @@ public class AccountController : Controller
                 return Redirect(model.ReturnUrl);
             }
 
-            return RedirectToAction("Index", "Admin");
+            return Redirect("/Admin");
         }
 
         if (result.IsLockedOut)
@@ -82,7 +83,15 @@ public class AccountController : Controller
         return View(model);
     }
 
-    [HttpPost]
+    [HttpGet("Logout")]
+    public async Task<IActionResult> LogoutGet()
+    {
+        await _signInManager.SignOutAsync();
+        _logger.LogInformation("User logged out.");
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpPost("Logout")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
@@ -91,7 +100,7 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    [HttpGet]
+    [HttpGet("AccessDenied")]
     [AllowAnonymous]
     public IActionResult AccessDenied()
     {

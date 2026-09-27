@@ -4,6 +4,7 @@
 }
 
 @* 섹션 메타데이터 기반 동적 렌더링 *@
+<div class="home">
 @foreach (var section in Model.Sections.Where(s => s.IsVisible).OrderBy(s => s.SortOrder))
 {
     switch (section.Key)
@@ -41,6 +42,7 @@
             break;
     }
 }
+</div>
 
 @section Scripts {
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@ViewBag.KakaoMapApiKey"></script>

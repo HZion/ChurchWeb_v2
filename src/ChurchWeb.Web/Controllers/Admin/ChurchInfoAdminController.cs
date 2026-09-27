@@ -10,8 +10,9 @@ using System.Text.Json;
 
 namespace ChurchWeb.Web.Controllers.Admin;
 
+// DEPRECATED: 이 MVC 컨트롤러는 더 이상 사용되지 않습니다. Blazor Admin 페이지를 사용하세요 (/Admin/church-info)
 [Authorize(Roles = "Admin")]
-[Route("Admin/ChurchInfo")]
+[Route("Admin-Old/ChurchInfo")]
 public class ChurchInfoAdminController : Controller
 {
     private readonly IChurchInfoService _churchInfoService;

@@ -14,8 +14,8 @@
   --card:#ffffff;
   --green:#3f8f5b;
   --red:#c0533f;
-  --radius:14px;
-  --shadow:0 1px 2px rgba(46,31,22,.05), 0 8px 24px rgba(46,31,22,.06);
+  --radius:4px;
+  --shadow:none;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{
@@ -296,3 +296,19 @@ body{
   .sermon-grid{grid-template-columns:repeat(2,1fr)}
   .builder{grid-template-columns:1fr}
 }
+
+/* ===== 절제된 톤 — 둥근 모서리·알약형 알림·그라데이션 정리 ===== */
+.btn,.search,.nav a,.qa a,.qa .ic,.menu-item,.sermon,.alert,.info-strip,.icon-btn,
+.canvas,.field-block,.field-block .ic,.palette .p-item,.stat .ic-badge,.brand .mark,
+.modal-header .btn-close,
+.field input[type=text],.field input[type=url],.field input[type=email],.field textarea,.field select{
+  border-radius:2px;
+}
+.tag,.pill,.badge{border-radius:2px}
+.brand .mark{background:var(--gold);color:var(--espresso);font-family:'Noto Serif KR',serif}
+.brand h1{font-family:'Noto Serif KR',serif}
+.page-head h2{font-family:'Noto Serif KR',serif}
+.nav .group{text-transform:none;letter-spacing:.02em}
+.nav a.active{background:rgba(255,255,255,.08);color:#fff;box-shadow:inset 3px 0 0 var(--gold)}
+.stat .ic-badge{display:none}
+.page{animation:none}

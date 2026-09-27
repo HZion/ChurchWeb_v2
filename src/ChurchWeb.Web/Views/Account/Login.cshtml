@@ -10,87 +10,45 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ChurchWeb</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" />
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+            min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+            background:#f5f3ee;color:#2b2620;
+            font-family:'Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;
         }
-        .login-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
+        .login-container{
+            width:100%;max-width:380px;background:#fff;
+            border:1px solid #e3ddd1;border-top:3px solid #2E1F16;
+            padding:40px 36px 32px;
         }
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
+        .login-header{margin-bottom:32px}
+        .login-header h1{font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;color:#2E1F16}
+        .login-header p{margin-top:6px;font-size:13.5px;color:#8a8377}
+        .mb-3{margin-bottom:18px}
+        .form-label{display:block;font-size:13px;font-weight:700;color:#2E1F16;margin-bottom:7px}
+        .form-control{
+            display:block;width:100%;padding:11px 12px;font:inherit;font-size:14.5px;color:#2b2620;
+            background:#fff;border:1px solid #d9d2c4;border-radius:2px;
         }
-        .login-header h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 0.5rem;
+        .form-control::placeholder{color:#b3aa9b}
+        .form-control:focus{outline:none;border-color:#A67C3D;box-shadow:inset 0 0 0 1px #A67C3D}
+        .form-check{display:flex;align-items:center;gap:8px}
+        .form-check-input{width:15px;height:15px;accent-color:#2E1F16}
+        .form-check-label{font-size:13.5px;color:#5c544a}
+        .btn-login{
+            display:block;width:100%;margin-top:8px;padding:12px;
+            font:inherit;font-size:15px;font-weight:700;color:#F3E7CF;
+            background:#2E1F16;border:0;border-radius:2px;cursor:pointer;
         }
-        .login-header p {
-            color: #666;
-            font-size: 0.95rem;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #444;
-            margin-bottom: 0.5rem;
-        }
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            transition: all 0.3s;
-        }
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 0.75rem;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 1rem;
-            transition: all 0.3s;
-        }
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        .form-check-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .alert {
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
-        .back-home {
-            text-align: center;
-            margin-top: 1.5rem;
-        }
-        .back-home a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .back-home a:hover {
-            text-decoration: underline;
-        }
+        .btn-login:hover{background:#3d2a1e}
+        .alert{margin-bottom:20px;padding:12px 14px;font-size:13px;color:#8a3b2f;background:#fbf1ee;border-left:3px solid #8a3b2f}
+        .alert ul{list-style:none}
+        .text-danger{display:block;margin-top:5px;font-size:12.5px;color:#8a3b2f}
+        .back-home{margin-top:28px;padding-top:18px;border-top:1px solid #ece7dd}
+        .back-home a{font-size:13px;color:#8a8377;text-decoration:none}
+        .back-home a:hover{color:#2E1F16}
     </style>
 </head>
 <body>

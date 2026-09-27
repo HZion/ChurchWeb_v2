@@ -3,15 +3,16 @@
 <section class="vision" id="vision">
     <div class="container">
         <div class="year">@Model.Year · 올해의 표어</div>
-        <div class="motto"><span class="q">"</span>@Model.Motto<span class="q">"</span></div>
-        <div class="practice">
+        <h2 class="motto">@Model.Motto</h2>
+        <div class="rule"></div>
+        <ol class="practice">
             @foreach (var item in Model.Practices)
             {
-                <div>
-                    <div class="n">@item.Number</div>
-                    <div class="t">@item.Text</div>
-                </div>
+                <li>
+                    <span class="n">@item.Number</span>
+                    <span class="t">@item.Text</span>
+                </li>
             }
-        </div>
+        </ol>
     </div>
 </section>

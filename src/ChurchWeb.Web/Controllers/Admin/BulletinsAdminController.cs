@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChurchWeb.Web.Controllers.Admin;
 
+// DEPRECATED: 이 MVC 컨트롤러는 더 이상 사용되지 않습니다. Blazor Admin 페이지를 사용하세요 (/Admin/bulletins)
 [Authorize(Roles = "Admin")]
-[Route("Admin/Bulletins")]
+[Route("Admin-Old/Bulletins")]
 public class BulletinsAdminController : Controller
 {
     private readonly IBulletinAdminService _bulletinService;

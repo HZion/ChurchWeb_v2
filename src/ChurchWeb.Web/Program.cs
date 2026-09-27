@@ -72,9 +72,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Cookie 설정
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.LoginPath = "/Admin/Login";
+    options.LogoutPath = "/Admin/Logout";
+    options.AccessDeniedPath = "/Admin/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
     options.SlidingExpiration = true;
 });
@@ -253,7 +253,7 @@ app.MapRazorPages();
 
 // Blazor Server 라우팅
 app.MapBlazorHub();
-app.MapFallbackToPage("/Admin/Blazor/{*path:nonfile}", "/_AdminHost");
+app.MapFallbackToPage("/Admin/{*path:nonfile}", "/_AdminHost");
 
 // DB 초기화 (마이그레이션 + 관리자 계정 시드)
 using (var scope = app.Services.CreateScope())

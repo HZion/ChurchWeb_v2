@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChurchWeb.Web.Controllers.Admin;
 
+// DEPRECATED: 이 MVC 컨트롤러는 더 이상 사용되지 않습니다. Blazor Admin 페이지를 사용하세요 (/Admin/sermons)
 [Authorize(Roles = "Admin")]
-[Route("Admin/Sermons")]
+[Route("Admin-Old/Sermons")]
 public class SermonsAdminController : Controller
 {
     private readonly ISermonAdminService _sermonService;

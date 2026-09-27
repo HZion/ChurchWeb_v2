@@ -14,31 +14,31 @@
         </div>
 
         <nav class="nav">
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor" Match="NavLinkMatch.All">
+            <NavLink class="" ActiveClass="active" href="/Admin" Match="NavLinkMatch.All">
                 <span class="ic">▦</span> 대시보드
             </NavLink>
 
             <div class="group">콘텐츠 관리</div>
 
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/church-info">
+            <NavLink class="" ActiveClass="active" href="/Admin/church-info">
                 <span class="ic">✎</span> 홈화면 관리
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/menu">
+            <NavLink class="" ActiveClass="active" href="/Admin/menu">
                 <span class="ic">☰</span> 메뉴 노출 관리
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/home-sections">
+            <NavLink class="" ActiveClass="active" href="/Admin/home-sections">
                 <span class="ic">◫</span> 홈 섹션 노출 관리
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/people">
+            <NavLink class="" ActiveClass="active" href="/Admin/people">
                 <span class="ic">👥</span> 섬기는 사람들
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/sermons">
+            <NavLink class="" ActiveClass="active" href="/Admin/sermons">
                 <span class="ic">▶</span> 설교 말씀
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/notices">
+            <NavLink class="" ActiveClass="active" href="/Admin/notices">
                 <span class="ic">✉</span> 교회 소식
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/outreach">
+            <NavLink class="" ActiveClass="active" href="/Admin/outreach">
                 <span class="ic">◈</span> 온라인 전도카드
             </NavLink>
 
@@ -47,13 +47,13 @@
             <a class="soon">
                 <span class="ic">⚙</span> 무코드 빌더
             </a>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/bulletins">
+            <NavLink class="" ActiveClass="active" href="/Admin/bulletins">
                 <span class="ic">◐</span> 주보
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/albums">
+            <NavLink class="" ActiveClass="active" href="/Admin/albums">
                 <span class="ic">▣</span> 갤러리
             </NavLink>
-            <NavLink class="" ActiveClass="active" href="/Admin/Blazor/calendar">
+            <NavLink class="" ActiveClass="active" href="/Admin/calendar">
                 <span class="ic">◑</span> 교회일정
             </NavLink>
         </nav>
@@ -64,9 +64,7 @@
                 <div class="avatar">관</div>
                 <div>
                     <div style="color:#efe7da;font-weight:700">@User?.Identity?.Name</div>
-                    <form action="/Account/Logout" method="post" style="margin: 0; display: inline;">
-                        <button type="submit" style="background:none;border:none;color:#a99a86;font-size:11px;padding:0;cursor:pointer;">로그아웃</button>
-                    </form>
+                    <a href="/Admin/Logout" style="color:#a99a86;font-size:11px;text-decoration:none;">로그아웃</a>
                 </div>
             </div>
         }
